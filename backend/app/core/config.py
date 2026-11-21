@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = Field(default=False, validation_alias="APP_DEBUG")
     cors_origins: list[str] = ["http://localhost:3000"]
+    # PostgreSQL connection string (Neon). Never commit the real value.
+    database_url: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
