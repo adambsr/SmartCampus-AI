@@ -24,8 +24,16 @@ def get_pool() -> ConnectionPool:
                 message="DATABASE_URL is not set.",
                 status_code=503,
             )
+        # Neon closes idle connections, so test each one before handing it out
+        # and drop connections that sat unused for more than 2 minutes.
         _pool = ConnectionPool(
-            url, min_size=1, max_size=5, open=True, kwargs={"row_factory": dict_row}
+            url,
+            min_size=1,
+            max_size=5,
+            max_idle=120,
+            check=ConnectionPool.check_connection,
+            open=True,
+            kwargs={"row_factory": dict_row},
         )
     return _pool
 
