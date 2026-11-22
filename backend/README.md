@@ -76,6 +76,29 @@ uv run pytest
 The test suite covers the preserved root route, health check, request IDs, common
 error responses, and automatic API documentation.
 
+## Database configuration
+
+The backend connects to the team's Neon PostgreSQL database using `DATABASE_URL`.
+
+When running the backend from the repository root, configure the root `.env` file with the connection string:
+
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require
+```
+
+Never commit real database credentials. The `.env` file is ignored by Git.
+
+The backend uses:
+- Psycopg 3 for PostgreSQL connections.
+- psycopg-pool for connection pooling.
+
+Both dependencies are declared in `pyproject.toml` and locked in `uv.lock`.
+
+Database schema creation, migrations, and demo data are managed separately in the repository's `database/` directory. See the root README for database setup instructions.
+
+The API includes database-backed program and admission endpoints.
+
+
 ## Project structure
 
 ```text
