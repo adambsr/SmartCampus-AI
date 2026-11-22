@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,6 +8,13 @@ from app.core.config import get_settings
 from app.core.exception_handlers import register_exception_handlers
 from app.core.openapi import ERROR_RESPONSES
 from app.core.request_id import RequestIdMiddleware
+from app.db.session import close_pool
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    yield
+    close_pool()
 
 
 def create_app() -> FastAPI:
@@ -17,6 +26,7 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        lifespan=lifespan,
     )
     application.add_middleware(
         CORSMiddleware,
