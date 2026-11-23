@@ -251,6 +251,25 @@ def get_visitor_session(
     return result
 
 
+def get_visitor_session_from_token(
+    conn: Connection,
+    *,
+    token: str,
+    now: datetime | None = None,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    """Validate a visitor JWT and load its session without trusting a caller-supplied ID."""
+    settings = settings or get_settings()
+    claims = _decode_access_token(token, settings)
+    return get_visitor_session(
+        conn,
+        session_id=UUID(claims["sid"]),
+        token=token,
+        now=now,
+        settings=settings,
+    )
+
+
 def refresh_visitor_session(
     conn: Connection,
     *,

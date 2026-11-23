@@ -1,0 +1,936 @@
+openapi: 3.1.0
+info:
+  title: SmartCampus AI - API candidats, conversations et documents
+  version: 1.0.0
+  description: 'Contrat API SA-5. Authentification des routes privées par Bearer JWT. Limites proposées : 20 messages/minute/session
+    visiteur, 60 messages/minute/candidat authentifié, 5 créations de sessions visiteur/heure/IP. Session visiteur
+    : 30 minutes d''inactivité, durée maximale absolue de 24 heures. Profil candidat recommandé : identité et coordonnées,
+    parcours scolaire, établissement actuel, année d''obtention, résultats facultatifs, intérêts, matières préférées,
+    objectifs, contraintes, langue préférée et consentements. Un compte utilisateur est lié à un profil candidat
+    ; un candidat peut avoir plusieurs dossiers de préinscription, documents, tentatives de QCM, rendez-vous et
+    conversations.'
+servers:
+- url: /api/v1
+  description: Préfixe de l'API backend FastAPI
+tags:
+- name: Sessions visiteurs
+- name: Candidats
+- name: Conversations
+- name: Documents
+security:
+- bearerAuth: []
+paths:
+  /visitor-sessions:
+    post:
+      tags:
+      - Sessions visiteurs
+      summary: Créer une session temporaire de visiteur
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                  enum:
+                  - fr
+                  - tn
+                  - arabizi
+                client_context:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Session créée. expires_at indique l'expiration absolue ; l'expiration après inactivité est
+            glissante et renouvelée à chaque activité valide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      description: 'Crée une session visiteur. La session expire après 30 minutes d''inactivité et au plus tard
+        24 heures après sa création. Limite : 5 créations par heure et par adresse IP.'
+  /visitor-sessions/{session_id}:
+    get:
+      tags:
+      - Sessions visiteurs
+      summary: Consulter l'état de sa session visiteur
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Session expirée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      description: Accessible uniquement avec le jeton de session visiteur correspondant.
+  /candidates/me:
+    get:
+      tags:
+      - Candidats
+      summary: Consulter le profil du candidat connecté
+      responses:
+        '200':
+          description: Profil du candidat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      tags:
+      - Candidats
+      summary: Mettre à jour son profil candidat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateProfileUpdate'
+      responses:
+        '200':
+          description: Profil mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /candidates/{candidate_id}:
+    get:
+      tags:
+      - Candidats
+      summary: Consulter un dossier candidat
+      parameters:
+      - $ref: '#/components/parameters/CandidateId'
+      responses:
+        '200':
+          description: Dossier candidat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /conversations:
+    post:
+      tags:
+      - Conversations
+      summary: Create a text conversation for the authenticated visitor
+      description: Requires the visitor session Bearer JWT. SA-26 supports text conversations only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreate'
+      responses:
+        '201':
+          description: Text conversation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Visitor session expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /conversations/{conversation_id}:
+    get:
+      tags:
+      - Conversations
+      summary: Retrieve an owned conversation and its messages
+      parameters:
+      - $ref: '#/components/parameters/ConversationId'
+      responses:
+        '200':
+          description: Conversation and chronologically ordered messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Visitor session expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      description: SA-26 does not implement automatic conversation deletion or anonymization.
+  /conversations/{conversation_id}/messages:
+    post:
+      tags:
+      - Conversations
+      summary: Persist a visitor text message
+      description: Stores the visitor message and returns it. No assistant response, audio processing, or message rate limit is provided by SA-26.
+      parameters:
+      - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisitorTextMessageCreate'
+      responses:
+        '201':
+          description: Visitor message persisted; no assistant response is generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conversation is closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410':
+          description: Visitor session expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /conversations/{conversation_id}/link:
+    post:
+      tags:
+      - Conversations
+      summary: Associer une conversation visiteur au compte candidat
+      description: Exige une authentification, le consentement explicite du candidat et la vérification de propriété
+        de la session.
+      parameters:
+      - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - consent
+              properties:
+                consent:
+                  type: boolean
+                  const: true
+      responses:
+        '200':
+          description: Conversation associée au compte
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conversation déjà associée ou état incompatible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /documents:
+    get:
+      tags:
+      - Documents
+      summary: Lister les documents accessibles
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - candidate_file
+          - official_corpus
+      - in: query
+        name: candidate_id
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Liste des documents autorisés
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags:
+      - Documents
+      summary: Déposer un document dans un dossier candidat
+      description: 'Dépôt direct du fichier au backend en multipart/form-data. Taille maximale : 10 Mo. Formats
+        acceptés par défaut : PDF, JPEG, PNG et DOCX. Le backend vérifie l''extension, le type MIME réel, la taille
+        et le contenu avant stockage privé. Les fichiers sont analysés contre les contenus malveillants avant d''être
+        rendus accessibles. Conservation proposée : jusqu''à la fin du cycle d''admission, puis 12 mois au maximum
+        avant suppression ou anonymisation, sous réserve des obligations légales ou institutionnelles. Les journaux
+        techniques sont conservés 90 jours.'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              - candidate_id
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF, JPEG, PNG ou DOCX ; 10 Mo maximum.
+                candidate_id:
+                  type: string
+                  format: uuid
+                document_type:
+                  type: string
+      responses:
+        '201':
+          description: Document enregistré Les fichiers sont stockés dans un espace privé ; la réponse ne retourne
+            pas de lien public direct.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          description: Fichier supérieur à 10 Mo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '415':
+          description: Type de fichier non autorisé.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /documents/{document_id}:
+    get:
+      tags:
+      - Documents
+      summary: Consulter les métadonnées d'un document
+      parameters:
+      - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Métadonnées du document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      description: Les documents de candidature sont conservés jusqu'à la fin du cycle d'admission, puis 12 mois
+        au maximum, avant suppression ou anonymisation, sauf obligation légale ou institutionnelle différente.
+    delete:
+      tags:
+      - Documents
+      summary: Supprimer un document
+      description: Réservé à un responsable autorisé ou à l'administrateur, selon les règles validées.
+      parameters:
+      - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '204':
+          description: Document supprimé
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /conversations/{conversation_id}/audio:
+    post:
+      tags:
+      - Conversations
+      summary: Déposer un message audio
+      description: 'Le navigateur transmet le fichier au backend via multipart/form-data. Le backend valide le format
+        et la taille, stocke temporairement le fichier puis le transmet à Whisper. Le client utilise ensuite audio_reference
+        dans POST /messages. Formats acceptés : audio/webm, audio/wav, audio/mpeg et audio/mp4 (m4a). Taille maximale
+        : 25 Mo par fichier.'
+      parameters:
+      - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Audio, 25 Mo maximum.
+      responses:
+        '201':
+          description: Audio reçu et référence temporaire créée. Le fichier audio brut est supprimé au plus tard
+            24 heures après transcription réussie.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - audio_reference
+                - status
+                properties:
+                  audio_reference:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                    - uploaded
+                    - transcribed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          description: Audio supérieur à 25 Mo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Format audio non pris en charge.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /visitor-sessions/{session_id}/refresh:
+    post:
+      tags:
+      - Sessions visiteurs
+      summary: Renouveler le jeton d'une session visiteur
+      description: Nécessite le Bearer JWT de la session correspondante. Retourne un nouveau JWT de 15 minutes.
+        Le renouvellement ne dépasse jamais la limite absolue de 24 heures de la session.
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Jeton renouvelé
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - access_token
+                - expires_at
+                properties:
+                  access_token:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Session expirée ou durée maximale atteinte.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Jeton d'accès JWT de courte durée (15 minutes). Le renouvellement utilise un refresh token rotatif
+        conservé dans un cookie Secure, HttpOnly et SameSite. Le refresh token n'est pas exposé au JavaScript du
+        navigateur. Les routes publiques et celles autorisées par session visiteur déclarent explicitement leur
+        mécanisme d'accès.
+  parameters:
+    SessionId:
+      in: path
+      name: session_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CandidateId:
+      in: path
+      name: candidate_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ConversationId:
+      in: path
+      name: conversation_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DocumentId:
+      in: path
+      name: document_id
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    VisitorSession:
+      type: object
+      required:
+      - id
+      - status
+      - created_at
+      - expires_at
+      - access_token
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - active
+          - expired
+        language:
+          type: string
+          enum:
+          - fr
+          - tn
+          - arabizi
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        access_token:
+          type: string
+          description: 'JWT Bearer limité à cette session visiteur ; durée du jeton : 15 minutes.'
+      description: 'Session visiteur : expiration après 30 minutes d''inactivité et 24 heures maximum après création.
+        Le backend renouvelle l''expiration d''inactivité lors d''une activité valide.'
+    Candidate:
+      type: object
+      required:
+      - id
+      - profile
+      properties:
+        id:
+          type: string
+          format: uuid
+        profile:
+          type: object
+          properties:
+            first_name:
+              type: string
+            last_name:
+              type: string
+            email:
+              type: string
+              format: email
+            academic_level:
+              type: string
+            interests:
+              type: array
+              items:
+                type: string
+            preferred_subjects:
+              type: array
+              items:
+                type: string
+            career_goals:
+              type: string
+            constraints:
+              type: array
+              items:
+                type: string
+            phone:
+              type: string
+            current_institution:
+              type: string
+            graduation_year:
+              type: integer
+            academic_results:
+              type: string
+              description: Facultatif ; ne collecter que si nécessaire.
+            preferred_language:
+              type: string
+              enum:
+              - fr
+              - tn
+              - arabizi
+            consent:
+              type: object
+              properties:
+                given:
+                  type: boolean
+                recorded_at:
+                  type: string
+                  format: date-time
+        application_status:
+          type: string
+      description: Profil minimal recommandé. Un compte utilisateur correspond à un profil candidat. Un candidat
+        peut être lié à plusieurs dossiers de préinscription, documents, tentatives de QCM, rendez-vous et conversations.
+        Les identifiants techniques sont des UUID.
+    CandidateProfileUpdate:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        academic_level:
+          type: string
+        interests:
+          type: array
+          items:
+            type: string
+        preferred_subjects:
+          type: array
+          items:
+            type: string
+        career_goals:
+          type: string
+        constraints:
+          type: array
+          items:
+            type: string
+        phone:
+          type: string
+        current_institution:
+          type: string
+        graduation_year:
+          type: integer
+        academic_results:
+          type: string
+        preferred_language:
+          type: string
+          enum:
+          - fr
+          - tn
+          - arabizi
+      additionalProperties: false
+    ConversationCreate:
+      type: object
+      required:
+      - channel
+      properties:
+        channel:
+          type: string
+          enum:
+          - text
+        visitor_session_id:
+          type: string
+          format: uuid
+        language:
+          type: string
+          enum:
+          - fr
+          - tn
+          - arabizi
+      description: Requires the visitor session Bearer JWT; SA-26 supports text conversations only.
+    Conversation:
+      type: object
+      required:
+      - id
+      - visitor_session_id
+      - channel
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        visitor_session_id:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          enum:
+          - text
+        status:
+          type: string
+          enum:
+          - active
+          - closed
+        created_at:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    MessageCreate:
+      type: object
+      required:
+      - content
+      - content_type
+      properties:
+        content:
+          type: string
+          description: Texte du message ; vide si content_type=audio_reference.
+        content_type:
+          type: string
+          enum:
+          - text
+          - audio_reference
+        language:
+          type: string
+          enum:
+          - fr
+          - tn
+          - arabizi
+        audio_reference:
+          type: string
+          format: uuid
+          description: Référence retournée par le dépôt audio.
+      description: Pour un message audio, déposer d'abord le fichier via POST /conversations/{conversation_id}/audio,
+        puis envoyer sa référence.
+    VisitorTextMessageCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - content
+      - content_type
+      properties:
+        content:
+          type: string
+          minLength: 1
+        content_type:
+          type: string
+          enum:
+          - text
+        language:
+          type: string
+          enum:
+          - fr
+          - tn
+          - arabizi
+    Message:
+      type: object
+      required:
+      - id
+      - role
+      - content
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          - system
+        content:
+          type: string
+        language:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    MessageExchange:
+      type: object
+      required:
+      - user_message
+      - assistant_message
+      properties:
+        user_message:
+          $ref: '#/components/schemas/Message'
+        assistant_message:
+          $ref: '#/components/schemas/Message'
+    Document:
+      type: object
+      required:
+      - id
+      - name
+      - category
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum:
+          - candidate_file
+          - official_corpus
+        document_type:
+          type: string
+        candidate_id:
+          type: string
+          format: uuid
+        mime_type:
+          type: string
+        size_bytes:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  reason:
+                    type: string
+            request_id:
+              type: string
+  responses:
+    BadRequest:
+      description: Requête incorrecte
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentification requise ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Action non autorisée pour cet utilisateur
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ressource introuvable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Données invalides
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Limite d'utilisation atteinte. La réponse peut inclure Retry-After et les en-têtes RateLimit-Limit,
+        RateLimit-Remaining et RateLimit-Reset.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
