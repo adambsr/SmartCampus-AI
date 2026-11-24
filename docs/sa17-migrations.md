@@ -1,31 +1,30 @@
-# SA-17: Create tables and relations (Alembic migrations)
+# SA-17: Database schema and Alembic migrations
 
-Status: 2026-11-21. Owner: Member A.
+The migration chain uses SQL files in `database/schema/` as the schema source of truth. Each Alembic revision applies one additive schema step:
 
-The 18 tables designed in SA-12, SA-13 and SA-14 are created by 3 Alembic migrations. Each migration runs the matching SQL file in `database/schema/`, so the SQL files stay the single source of truth.
-
-| Revision | Creates | SQL file |
+| Revision | Scope | SQL file |
 | --- | --- | --- |
-| 0001_catalog | 9 catalog tables | catalog_schema.sql |
-| 0002_users_applications | 5 user and application tables + status-history trigger | users_applications_schema.sql |
-| 0003_documents_sync | 4 document and sync tables | documents_sync_schema.sql |
+| `0001_catalog` | Institution and program catalog | `catalog_schema.sql` |
+| `0002_users_applications` | Users, candidate profiles, applications, history, recommendations | `users_applications_schema.sql` |
+| `0003_documents_sync` | Source documents, chunks, uploads, sync jobs | `documents_sync_schema.sql` |
+| `0004_visitor_sessions` | Anonymous visitor sessions and creation throttling | `visitor_sessions_schema.sql` |
+| `0005_conversations` | Visitor-owned conversations and messages | `conversations_schema.sql` |
+| `0006_account_auth` | Account sessions, invitations, role audit, auth throttling | `account_auth_schema.sql` |
 
-## Commands (from the repo root, with `.env` filled in)
+The default Neon database is at `0006_account_auth`. Existing records were preserved when that additive migration was applied.
 
-| Goal | Command |
-| --- | --- |
-| Create or update the real database (`DATABASE_URL`) | `alembic -c database/alembic.ini upgrade head` |
-| Same on the test database (`TEST_DATABASE_URL`) | `alembic -c database/alembic.ini -x db=test upgrade head` |
-| See which revision a database is at | `alembic -c database/alembic.ini current` |
-| Remove everything (test database only!) | `alembic -c database/alembic.ini -x db=test downgrade base` |
+## Connection policy
 
-## Changing the schema later
+Use `DATABASE_URL` only. The default target is the team's Neon branch (`neondb`). Do not select `TEST_DATABASE_URL` or `smartcampus-test`. Keep connection strings out of command output and source control.
 
-1. Edit nothing that is already applied. Add a new migration instead:
-   `alembic -c database/alembic.ini revision -m "short description"`
-2. Write the change in `upgrade()` and its undo in `downgrade()`.
-3. Apply it to the test database first, then to the real one.
+The Alembic environment reads `DATABASE_URL` from the root `.env` or process environment. From the repository root, inspect the current revision with the pinned database dependencies:
 
-## Tested
+```powershell
+uv run --no-project --with-requirements database/requirements.txt python -m alembic -c database/alembic.ini current
+```
 
-On PostgreSQL 16 + pgvector: `upgrade head` creates the 18 tables, `downgrade base` removes all tables and types, and `upgrade head` works again after that.
+Schema work must be additive: preserve applied revisions and create a new migration for later changes. Applying migrations to the default Neon database requires explicit approval. Never downgrade or reset the current database.
+
+## Seeder
+
+The demo seeder is destructive and separate from schema migrations. It truncates all application tables and now requires `--confirm-reset`. Do not run it against the default Neon database or any database containing records to preserve. See [SA-18 demo data](sa18-demo-data.md).

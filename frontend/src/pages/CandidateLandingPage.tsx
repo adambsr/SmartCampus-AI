@@ -89,10 +89,6 @@ function CandidateLandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [notice, setNotice] = useState('')
 
-  const showPreviewNotice = () => {
-    setNotice('Cet espace sera accessible lorsque le service de candidature sera disponible.')
-  }
-
   return (
     <div className="candidate-page">
       <div className="topline">
@@ -127,9 +123,9 @@ function CandidateLandingPage() {
               </select>
               <ChevronDown size={14} aria-hidden="true" />
             </label>
-            <Button type="button" variant="secondary" size="small" onClick={showPreviewNotice}>
+            <Link to="/candidate" className="ui-button ui-button--secondary ui-button--small">
               Espace Candidat <ArrowRight size={15} />
-            </Button>
+            </Link>
           </div>
         </div>
       </header>

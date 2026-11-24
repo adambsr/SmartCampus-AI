@@ -13,13 +13,173 @@ servers:
 - url: /api/v1
   description: Préfixe de l'API backend FastAPI
 tags:
+- name: Authentification comptes
+- name: Administration utilisateurs
 - name: Sessions visiteurs
 - name: Candidats
 - name: Conversations
 - name: Documents
 security:
-- bearerAuth: []
+- accountBearer: []
 paths:
+  /auth/register:
+    post:
+      tags: [Authentification comptes]
+      summary: Créer un compte candidat
+      description: Le rôle est fixé à candidate par le serveur. Un compte existant sans mot de passe ne peut pas être revendiqué ici.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RegisterRequest'}
+      responses:
+        '201':
+          description: Compte créé ; jeton d'accès dans le JSON et refresh rotatif en cookie HttpOnly.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthResult'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ValidationError'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+  /auth/login:
+    post:
+      tags: [Authentification comptes]
+      summary: Connecter un candidat ou un responsable
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginRequest'}
+      responses:
+        '200':
+          description: Authentification réussie ; refresh rotatif en cookie HttpOnly.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthResult'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+  /auth/refresh:
+    post:
+      tags: [Authentification comptes]
+      summary: Renouveler les identifiants de compte
+      description: Utilise le cookie de refresh de compte et exige une origine autorisée. Le jeton est rotatif.
+      security: []
+      responses:
+        '200':
+          description: Nouveau jeton d'accès et nouveau cookie HttpOnly.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthResult'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /auth/logout:
+    post:
+      tags: [Authentification comptes]
+      summary: Révoquer la session de compte
+      description: Révoque la session identifiée par le cookie ou un jeton d'accès valide et efface le cookie.
+      security: []
+      responses:
+        '204': {description: Session terminée}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /auth/me:
+    get:
+      tags: [Authentification comptes]
+      summary: Consulter le compte et le rôle effectif
+      responses:
+        '200':
+          description: Compte courant
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Account'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /auth/activate:
+    post:
+      tags: [Authentification comptes]
+      summary: Définir le premier mot de passe avec une invitation
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ActivateRequest'}
+      responses:
+        '204': {description: Compte activé ; connexion ensuite requise}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /admin/users:
+    get:
+      tags: [Administration utilisateurs]
+      summary: Lister les comptes (administrateur)
+      parameters:
+      - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      - {in: query, name: offset, schema: {type: integer, minimum: 0, default: 0}}
+      responses:
+        '200':
+          description: Comptes sans secrets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: {type: array, items: {$ref: '#/components/schemas/Account'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Administration utilisateurs]
+      summary: Créer un compte responsable en attente d'activation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StaffCreateRequest'}
+      responses:
+        '201':
+          description: Compte responsable sans mot de passe
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Account'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /admin/users/{user_id}:
+    patch:
+      tags: [Administration utilisateurs]
+      summary: Changer rôle, institution ou statut d'un compte
+      parameters:
+      - {in: path, name: user_id, required: true, schema: {type: integer, format: int64}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AccountUpdateRequest'}
+      responses:
+        '200':
+          description: Compte mis à jour ; changement audité et sessions révoquées.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Account'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /admin/users/{user_id}/invitations:
+    post:
+      tags: [Administration utilisateurs]
+      summary: Émettre une invitation à usage unique
+      description: Le jeton n'est retourné qu'une fois à l'administrateur, pour remise manuelle.
+      parameters:
+      - {in: path, name: user_id, required: true, schema: {type: integer, format: int64}}
+      responses:
+        '201':
+          description: Invitation valable 24 heures par défaut.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Invitation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
   /visitor-sessions:
     post:
       tags:
@@ -49,7 +209,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VisitorSession'
+                $ref: '#/components/schemas/VisitorSessionWithRefresh'
         '400':
           $ref: '#/components/responses/BadRequest'
         '429':
@@ -58,6 +218,7 @@ paths:
         24 heures après sa création. Limite : 5 créations par heure et par adresse IP.'
   /visitor-sessions/{session_id}:
     get:
+      security: [{visitorBearer: []}]
       tags:
       - Sessions visiteurs
       summary: Consulter l'état de sa session visiteur
@@ -103,6 +264,7 @@ paths:
       tags:
       - Candidats
       summary: Mettre à jour son profil candidat
+      description: Route prévue par SA-5, non implémentée dans SA-28.
       requestBody:
         required: true
         content:
@@ -126,6 +288,24 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /candidates/me/applications:
+    get:
+      tags: [Candidats]
+      summary: Consulter les statuts de ses candidatures
+      responses:
+        '200':
+          description: Candidatures appartenant au compte connecté.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/CandidateApplication'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
   /candidates/{candidate_id}:
     get:
       tags:
@@ -150,6 +330,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /conversations:
     post:
+      security: [{visitorBearer: []}]
       tags:
       - Conversations
       summary: Create a text conversation for the authenticated visitor
@@ -183,6 +364,7 @@ paths:
           $ref: '#/components/responses/ValidationError'
   /conversations/{conversation_id}:
     get:
+      security: [{visitorBearer: []}]
       tags:
       - Conversations
       summary: Retrieve an owned conversation and its messages
@@ -210,6 +392,7 @@ paths:
       description: SA-26 does not implement automatic conversation deletion or anonymization.
   /conversations/{conversation_id}/messages:
     post:
+      security: [{visitorBearer: []}]
       tags:
       - Conversations
       summary: Persist a visitor text message
@@ -307,8 +490,8 @@ paths:
       - in: query
         name: candidate_id
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Liste des documents autorisés
@@ -354,8 +537,8 @@ paths:
                   format: binary
                   description: PDF, JPEG, PNG ou DOCX ; 10 Mo maximum.
                 candidate_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 document_type:
                   type: string
       responses:
@@ -432,6 +615,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /conversations/{conversation_id}/audio:
     post:
+      security: [{visitorBearer: []}]
       tags:
       - Conversations
       summary: Déposer un message audio
@@ -496,11 +680,22 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /visitor-sessions/{session_id}/refresh:
     post:
+      security: []
       tags:
       - Sessions visiteurs
       summary: Renouveler le jeton d'une session visiteur
-      description: Nécessite le Bearer JWT de la session correspondante. Retourne un nouveau JWT de 15 minutes.
+      description: Extension SA-25 implémentée. Reçoit le refresh token opaque courant en JSON,
+        puis retourne un nouveau JWT de 15 minutes et un refresh token rotatif.
         Le renouvellement ne dépasse jamais la limite absolue de 24 heures de la session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: {type: string, minLength: 32}
       parameters:
       - $ref: '#/components/parameters/SessionId'
       responses:
@@ -509,16 +704,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                - access_token
-                - expires_at
-                properties:
-                  access_token:
-                    type: string
-                  expires_at:
-                    type: string
-                    format: date-time
+                $ref: '#/components/schemas/VisitorSessionWithRefresh'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -533,14 +719,17 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
 components:
   securitySchemes:
-    bearerAuth:
+    accountBearer:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Jeton d'accès JWT de courte durée (15 minutes). Le renouvellement utilise un refresh token rotatif
-        conservé dans un cookie Secure, HttpOnly et SameSite. Le refresh token n'est pas exposé au JavaScript du
-        navigateur. Les routes publiques et celles autorisées par session visiteur déclarent explicitement leur
-        mécanisme d'accès.
+      description: JWT de compte valable 15 minutes. Le refresh rotatif est dans un cookie Secure,
+        HttpOnly et SameSite ; il n'est pas exposé au JavaScript.
+    visitorBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT réservé à une session visiteur SA-25 ; ne donne aucun accès à un compte.
   parameters:
     SessionId:
       in: path
@@ -554,8 +743,8 @@ components:
       name: candidate_id
       required: true
       schema:
-        type: string
-        format: uuid
+        type: integer
+        format: int64
     ConversationId:
       in: path
       name: conversation_id
@@ -571,6 +760,79 @@ components:
         type: string
         format: uuid
   schemas:
+    Account:
+      type: object
+      required: [id, email, full_name, role, is_active]
+      properties:
+        id: {type: integer, format: int64}
+        email: {type: string, format: email}
+        full_name: {type: string}
+        role: {type: string, enum: [candidate, academic_staff, interviewer, direction, admin]}
+        institution_id: {type: integer, format: int64, nullable: true}
+        is_active: {type: boolean}
+    AuthResult:
+      type: object
+      required: [access_token, token_type, expires_in, user]
+      properties:
+        access_token: {type: string, description: JWT de compte valable 15 minutes}
+        token_type: {type: string, const: bearer}
+        expires_in: {type: integer, const: 900}
+        user: {$ref: '#/components/schemas/Account'}
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [email, full_name, password]
+      properties:
+        email: {type: string, format: email}
+        full_name: {type: string, minLength: 1, maxLength: 200}
+        password: {type: string, minLength: 12, maxLength: 128, writeOnly: true}
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: {type: string, format: email}
+        password: {type: string, writeOnly: true}
+    ActivateRequest:
+      type: object
+      additionalProperties: false
+      required: [invitation_token, password]
+      properties:
+        invitation_token: {type: string, writeOnly: true}
+        password: {type: string, minLength: 12, maxLength: 128, writeOnly: true}
+    StaffCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [email, full_name, role]
+      properties:
+        email: {type: string, format: email}
+        full_name: {type: string, minLength: 1, maxLength: 200}
+        role: {type: string, enum: [academic_staff, interviewer, direction, admin]}
+        institution_id: {type: integer, format: int64, nullable: true}
+    AccountUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        role: {type: string, enum: [academic_staff, interviewer, direction, admin]}
+        institution_id: {type: integer, format: int64, nullable: true}
+        is_active: {type: boolean}
+    Invitation:
+      type: object
+      required: [invitation_token, expires_at]
+      properties:
+        invitation_token: {type: string, description: Secret affiché une seule fois}
+        expires_at: {type: string, format: date-time}
+    CandidateApplication:
+      type: object
+      required: [id, program_id, program_name, institution_code, status]
+      properties:
+        id: {type: integer, format: int64}
+        program_id: {type: integer, format: int64}
+        program_name: {type: string}
+        institution_code: {type: string}
+        status: {type: string}
+        consent_at: {type: string, format: date-time, nullable: true}
+        submitted_at: {type: string, format: date-time, nullable: true}
     VisitorSession:
       type: object
       required:
@@ -605,69 +867,42 @@ components:
           description: 'JWT Bearer limité à cette session visiteur ; durée du jeton : 15 minutes.'
       description: 'Session visiteur : expiration après 30 minutes d''inactivité et 24 heures maximum après création.
         Le backend renouvelle l''expiration d''inactivité lors d''une activité valide.'
+    VisitorSessionWithRefresh:
+      allOf:
+      - $ref: '#/components/schemas/VisitorSession'
+      - type: object
+        required: [refresh_token]
+        properties:
+          refresh_token: {type: string, description: Jeton opaque SA-25 retourné lors de la création et du renouvellement.}
     Candidate:
       type: object
       required:
       - id
-      - profile
+      - email
+      - full_name
+      - preferred_language
       properties:
         id:
-          type: string
-          format: uuid
-        profile:
-          type: object
-          properties:
-            first_name:
-              type: string
-            last_name:
-              type: string
-            email:
-              type: string
-              format: email
-            academic_level:
-              type: string
-            interests:
-              type: array
-              items:
-                type: string
-            preferred_subjects:
-              type: array
-              items:
-                type: string
-            career_goals:
-              type: string
-            constraints:
-              type: array
-              items:
-                type: string
-            phone:
-              type: string
-            current_institution:
-              type: string
-            graduation_year:
-              type: integer
-            academic_results:
-              type: string
-              description: Facultatif ; ne collecter que si nécessaire.
-            preferred_language:
-              type: string
-              enum:
-              - fr
-              - tn
-              - arabizi
-            consent:
-              type: object
-              properties:
-                given:
-                  type: boolean
-                recorded_at:
-                  type: string
-                  format: date-time
-        application_status:
-          type: string
-      description: Profil minimal recommandé. Un compte utilisateur correspond à un profil candidat. Un candidat
-        peut être lié à plusieurs dossiers de préinscription, documents, tentatives de QCM, rendez-vous et conversations.
-        Les identifiants techniques sont des UUID.
+          type: integer
+          format: int64
+        email: {type: string, format: email}
+        full_name: {type: string}
+        phone: {type: string, nullable: true}
+        birth_year: {type: integer, nullable: true}
+        city: {type: string, nullable: true}
+        nationality: {type: string, nullable: true}
+        current_level: {type: string, nullable: true}
+        bac_section: {type: string, nullable: true}
+        bac_year: {type: integer, nullable: true}
+        bac_average: {type: string, nullable: true}
+        last_diploma: {type: string, nullable: true}
+        last_diploma_specialty: {type: string, nullable: true}
+        favorite_subjects: {type: array, items: {type: string}, nullable: true}
+        interests: {type: array, items: {type: string}, nullable: true}
+        career_goal: {type: string, nullable: true}
+        constraints: {type: string, nullable: true}
+        preferred_language: {type: string, enum: [fr, tn, arabizi, ar, en]}
+      description: Profil de candidate_profile et app_user existants. L'identifiant est un BIGINT.
     CandidateProfileUpdate:
       type: object
       properties:
@@ -860,8 +1095,8 @@ components:
         document_type:
           type: string
         candidate_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         mime_type:
           type: string
         size_bytes:
@@ -897,6 +1132,12 @@ components:
             request_id:
               type: string
   responses:
+    Conflict:
+      description: Conflit avec l'état du compte ou une adresse déjà enregistrée
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     BadRequest:
       description: Requête incorrecte
       content:

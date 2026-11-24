@@ -19,7 +19,11 @@ from app.services import visitor_sessions
 
 
 router = APIRouter(responses=ERROR_RESPONSES)
-bearer = HTTPBearer(auto_error=False)
+bearer = HTTPBearer(
+    auto_error=False,
+    scheme_name="visitorBearer",
+    description="A visitor-session JWT; account JWTs are not accepted.",
+)
 AUTH_RESPONSES = {
     401: {"model": ErrorResponse, "description": "Visitor Bearer token required or invalid"},
     403: {"model": ErrorResponse, "description": "Visitor session ownership mismatch"},

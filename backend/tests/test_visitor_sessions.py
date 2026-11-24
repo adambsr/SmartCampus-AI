@@ -134,7 +134,9 @@ def test_creation_returns_unique_uuid_and_does_not_store_client_context(api) -> 
 
 def test_session_routes_fail_closed_without_signing_secret(api, monkeypatch) -> None:
     client, _, _, _ = api
-    monkeypatch.setattr(service, "get_settings", lambda: Settings())
+    monkeypatch.setattr(
+        service, "get_settings", lambda: Settings(_env_file=None, visitor_session_secret=None)
+    )
     response = client.post("/api/v1/visitor-sessions")
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "VISITOR_SESSION_NOT_CONFIGURED"

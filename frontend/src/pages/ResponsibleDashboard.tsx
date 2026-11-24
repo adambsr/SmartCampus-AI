@@ -4,7 +4,8 @@ import {
   ChevronDown, CircleHelp, ClipboardList, GraduationCap, LayoutDashboard, LockKeyhole,
   Menu, PanelLeftClose, Settings2, ShieldCheck, UserRound, Users, X,
 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { useAuth } from '../components/shared/AuthContext'
 import { HealthCheck } from '../components/shared/HealthCheck'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -31,9 +32,20 @@ const navItems = [
 ]
 
 function ResponsibleDashboard() {
+  const { account, signOut } = useAuth()
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [language, setLanguage] = useState('fr')
   const [notice, setNotice] = useState('')
+  const roleName = account?.role === 'academic_staff' ? 'Responsable académique' : account?.role === 'interviewer' ? 'Responsable entretien' : account?.role === 'direction' ? 'Direction' : 'Administration'
+  async function leave() {
+    try {
+      await signOut()
+      navigate('/', { replace: true })
+    } catch {
+      setNotice('Déconnexion impossible pour le moment. Réessayez.')
+    }
+  }
 
   return (
     <div className="staff-layout">
@@ -51,7 +63,7 @@ function ResponsibleDashboard() {
           <Button type="button" variant="quiet" size="icon" className="staff-menu-toggle" aria-label="Ouvrir la navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><Menu size={20} /></Button>
           <Link to="/" className="staff-mobile-brand" aria-label="SmartCampus AI, accueil"><span><GraduationCap size={17} /></span>SmartCampus AI</Link>
           <div className="staff-topbar__context"><Badge aria-label={`Session universitaire ${academicYear}`}><span className="session-dot" /> {academicYear}</Badge><span className="staff-location"><Building2 size={15} /> Technopôle &amp; Centre Sfax</span></div>
-          <div className="staff-topbar__actions"><label className="language-select language-select--staff"><span className="sr-only">Langue</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="fr">Français</option><option value="tn">عربي تونسي</option><option value="arabizi">Arabizi</option></select><ChevronDown size={14} /></label><Button type="button" variant="quiet" size="icon" aria-label="Notifications, fonction non disponible" onClick={() => setNotice('Les notifications ne sont pas encore connectées.')}><Bell size={18} /></Button><div className="staff-profile"><span>Direction &amp; Équipe Académique<small>Pôle IIT · ISB Sfax</small></span><span className="staff-profile__avatar"><UserRound size={18} /></span></div></div>
+          <div className="staff-topbar__actions"><label className="language-select language-select--staff"><span className="sr-only">Langue</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="fr">Français</option><option value="tn">عربي تونسي</option><option value="arabizi">Arabizi</option></select><ChevronDown size={14} /></label><Button type="button" variant="quiet" size="icon" aria-label="Notifications, fonction non disponible" onClick={() => setNotice('Les notifications ne sont pas encore connectées.')}><Bell size={18} /></Button><div className="staff-profile"><span>{account?.full_name}<small>{roleName}</small></span><span className="staff-profile__avatar"><UserRound size={18} /></span></div><Button type="button" variant="quiet" onClick={leave}>Déconnexion</Button></div>
         </header>
 
         <main className="staff-content" id="overview">
@@ -59,7 +71,7 @@ function ResponsibleDashboard() {
 
           <section className="modules-section" id="modules"><div className="modules-heading"><div><h2>Modules fonctionnels du pôle</h2><p>Périmètres de service prévus pour l’admission et l’orientation pédagogique.</p></div><Badge className="year-badge">Spécifications {academicYear}</Badge></div><div className="module-grid">{modules.map(({ title, status, description, icon: Icon, foot }) => <Card className="module-card" key={title}><div className="module-card__top"><span className="module-card__icon"><Icon size={20} /></span><Badge className="module-status">{status}</Badge></div><h3>{title}</h3><p>{description}</p><div className="module-card__footer"><span>{foot}</span><ArrowRight size={16} aria-hidden="true" /></div></Card>)}</div></section>
 
-          <section className="workspace-card" id="workspace"><span className="workspace-icon"><ClipboardList size={31} /><span><LockKeyhole size={14} /></span></span><p className="workspace-eyebrow">Accès personnalisé par rôle</p><h2>Espace de travail en attente d’attribution de rôle</h2><p className="workspace-copy">L’espace sera personnalisé selon le rôle attribué. Les fonctionnalités, outils d’évaluation et prérogatives diffèrent selon le profil (superviseur académique IIT/ISB, membre du jury d’entretien, direction ou administrateur). Tous les rôles ne disposent pas des mêmes accès.</p><div className="role-list">{roleLabels.map((role) => <Badge key={role}>{role}</Badge>)}</div><div className="workspace-actions"><Button type="button" onClick={() => setNotice('Le guide staff sera disponible lorsque l’espace sera attribué.')}><BookOpen size={16} /> Consulter le guide staff</Button><Button type="button" variant="secondary" onClick={() => setNotice('Les coordonnées de la direction académique ne sont pas configurées dans cette version.')}><CircleHelp size={16} /> Contacter la direction académique</Button></div></section>
+          <section className="workspace-card" id="workspace"><span className="workspace-icon"><ClipboardList size={31} /><span><LockKeyhole size={14} /></span></span><p className="workspace-eyebrow">Accès personnalisé par rôle</p><h2>Votre rôle : {roleName}</h2><p className="workspace-copy">Votre accès à cet espace a été vérifié. Les modules ci-dessous restent des aperçus ; les données de candidature sont protégées par les règles d’accès du backend.</p><div className="role-list">{roleLabels.map((role) => <Badge key={role}>{role}</Badge>)}</div><div className="workspace-actions"><Button type="button" onClick={() => setNotice('Le guide staff sera disponible prochainement.')}><BookOpen size={16} /> Consulter le guide staff</Button><Button type="button" variant="secondary" onClick={() => setNotice('Les coordonnées de la direction académique ne sont pas configurées dans cette version.')}><CircleHelp size={16} /> Contacter la direction académique</Button></div></section>
 
           <section className="compliance-grid" aria-label="Informations institutionnelles"><Card><ShieldCheck size={19} /><div><h3>Confidentialité &amp; conformité</h3><p>Les dossiers académiques doivent être traités selon les règles de protection des données étudiantes.</p></div></Card><Card><GraduationCap size={19} /><div><h3>Accréditations nationales</h3><p>Les diplômes sont homologués et reconnus par le Ministère de l’Enseignement Supérieur et de la Recherche Scientifique de Tunisie.</p></div></Card><Card><PanelLeftClose size={19} /><div><h3>Paramétrage des commissions</h3><p>Les périmètres de travail dépendent du rôle et des responsabilités attribués.</p></div></Card></section>
 

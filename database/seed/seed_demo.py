@@ -1,14 +1,15 @@
 """SA-18: load demo data into the SmartCampus AI database.
 
-Usage (from the repo root, with .env filled in):
-    python database/seed/seed_demo.py --db test     # smartcampus_test
-    python database/seed/seed_demo.py --db main     # neondb (the demo database)
+Usage (from the repo root, with DATABASE_URL configured):
+    python database/seed/seed_demo.py --confirm-reset
 
-It EMPTIES all 18 tables first, then loads:
+This is a destructive fresh-demo bootstrap. It refuses to run without the explicit
+--confirm-reset flag, uses DATABASE_URL only, and empties all 26 application tables
+before loading:
 - IIT and ISB, the 31 real programs from catalog_inventory.csv (iit.tn / isb.tn),
   their admission rules, accepted backgrounds, published fees and IIT fee rules,
 - pathways between programs, one open admission campaign per school,
-- 5 staff accounts and 5 candidates whose applications sit at different statuses,
+- 5 passwordless staff accounts and 5 candidates whose applications sit at different statuses,
 - 5 official source documents and one sync job.
 
 Fees are copied from the websites and stay is_confirmed = false until the admissions
@@ -18,6 +19,7 @@ import argparse
 import csv
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 import psycopg
 from dotenv import find_dotenv, load_dotenv
@@ -28,6 +30,8 @@ YEAR = "2026-2027"
 TABLES = [
     "application_document", "sync_job", "document_chunk", "source_document",
     "recommendation", "application_history", "application", "candidate_profile", "app_user",
+    "conversation_message", "conversation", "account_auth_attempt", "account_role_audit",
+    "account_invitation", "account_session", "visitor_session_creation", "visitor_session",
     "admission_campaign", "pathway", "fee_rule", "tariff", "accepted_background",
     "admission_requirement", "specialization", "program", "institution",
 ]
@@ -294,12 +298,17 @@ def seed(conn):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Load SmartCampus AI demo data (empties the tables first).")
-    ap.add_argument("--db", choices=["test", "main"], required=True,
-                    help="test = TEST_DATABASE_URL, main = DATABASE_URL")
+    ap = argparse.ArgumentParser(description="Destructively load SmartCampus AI demo data into DATABASE_URL.")
+    ap.add_argument("--confirm-reset", action="store_true",
+                    help="required: confirms that every listed application table will be emptied")
     args = ap.parse_args()
+    if not args.confirm_reset:
+        ap.error("refusing to clear records without --confirm-reset")
     load_dotenv(find_dotenv(usecwd=True))
-    url = os.environ["TEST_DATABASE_URL" if args.db == "test" else "DATABASE_URL"]
+    url = os.environ["DATABASE_URL"]
+    database_name = urlparse(url).path.lstrip("/").lower()
+    if database_name in {"smartcampus-test", "smartcampus_test"}:
+        ap.error("DATABASE_URL points to the prohibited smartcampus-test database")
     with psycopg.connect(url) as conn:
         seed(conn)
         conn.commit()

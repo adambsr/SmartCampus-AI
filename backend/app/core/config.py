@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     visitor_session_max_hours: int = Field(default=24, gt=0)
     visitor_session_access_token_minutes: int = Field(default=15, gt=0)
     visitor_session_creations_per_hour: int = Field(default=5, gt=0)
+    account_jwt_secret: SecretStr | None = None
+    account_refresh_days: int = Field(default=7, gt=0)
+    account_invite_hours: int = Field(default=24, gt=0)
+    # Production must keep this true. A loopback-only HTTP dev deployment may override it.
+    auth_cookie_secure: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",

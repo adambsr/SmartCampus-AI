@@ -18,7 +18,11 @@ from app.schemas.visitor_session import (
 from app.services import visitor_sessions as service
 
 router = APIRouter(responses=ERROR_RESPONSES)
-bearer = HTTPBearer(auto_error=False)
+bearer = HTTPBearer(
+    auto_error=False,
+    scheme_name="visitorBearer",
+    description="A visitor-session JWT; account JWTs are not accepted.",
+)
 SESSION_ERRORS = {
     401: {"model": ErrorResponse, "description": "Invalid or expired session credential"},
     403: {"model": ErrorResponse, "description": "Session ownership mismatch"},

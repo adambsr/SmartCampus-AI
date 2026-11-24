@@ -1,8 +1,6 @@
 # smartcampus-backend
 
-SmartCampus SA-7 backend foundation. This project keeps the FastAPI CLI generated
-project as its foundation and adds the API, configuration, and error-handling
-structure from the SA7 skeleton.
+SmartCampus AI backend built with FastAPI, Psycopg, PyJWT, and Alembic. It serves the catalog and admissions APIs, visitor sessions and conversations, account authentication, candidate reads, and admin user provisioning.
 
 ## Requirements
 
@@ -24,8 +22,11 @@ Copy-Item .env.example .env
 ```
 
 The `.env` file is ignored by Git. Configuration can also be supplied using
-environment variables. The supported settings are `APP_NAME`, `APP_VERSION`,
-`API_V1_PREFIX`, `ENVIRONMENT`, `APP_DEBUG`, and `CORS_ORIGINS` (comma-separated).
+environment variables. In addition to `APP_NAME`, `APP_VERSION`,
+`API_V1_PREFIX`, `ENVIRONMENT`, `APP_DEBUG`, and `CORS_ORIGINS`, the service needs
+`DATABASE_URL`, `VISITOR_SESSION_SECRET`, and a distinct `ACCOUNT_JWT_SECRET`.
+Account cookies are Secure by default; `AUTH_COOKIE_SECURE=false` is only for
+local HTTP development. Never commit or print secret values.
 
 ## Start the development server
 
@@ -94,7 +95,10 @@ The backend uses:
 
 Both dependencies are declared in `pyproject.toml` and locked in `uv.lock`.
 
-Database schema creation, migrations, and demo data are managed separately in the repository's `database/` directory. See the root README for database setup instructions.
+Database schema and demo data are managed in the repository's `database/`
+directory. The default Neon branch is at migration `0006_account_auth`. The SA-18
+seeder truncates application tables and requires `--confirm-reset`; never run it
+against the default Neon database or records you need to preserve.
 
 The API includes database-backed program and admission endpoints.
 
@@ -114,5 +118,22 @@ pyproject.toml                  Dependencies and pytest configuration
 uv.lock                         Locked dependency versions
 ```
 
-Database integration, migrations, authentication, and external AI services are
-outside the scope of this SA-7 foundation.
+Database integration, migrations, visitor authentication, and account
+authentication have been added after the original SA-7 foundation. External AI
+services and SA-29 guest conversation linking remain future work.
+
+## SA-28 account authentication
+
+SA-28 adds account registration, login, refresh, logout, first-password activation,
+role checks, and scoped candidate reads. Account JWTs use `ACCOUNT_JWT_SECRET`,
+which must differ from `VISITOR_SESSION_SECRET`. Set it in the deployment environment;
+do not use the placeholder from `.env.example`. The additive migration
+`0006_account_auth` was applied to the default Neon `DATABASE_URL` on 2026-11-24.
+
+The initial admin password was set privately on the default Neon database on
+2026-11-24. The other nine demo accounts remain passwordless. The admin can
+issue single-use invitations for those accounts. The one-time
+`uv run python -m scripts.bootstrap_admin` command now refuses to run again.
+The demo seed truncates data and must not be rerun.
+
+See `../docs/sa28-auth-roles.md` for endpoints, access rules, and deployment notes.
