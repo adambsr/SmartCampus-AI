@@ -31,4 +31,12 @@
 .application-list { list-style: none; padding: 0; margin: 0; }
 .application-list li { display: flex; justify-content: space-between; gap: 12px; padding: 13px 0; border-top: 1px solid #e7eaf1; }
 .application-list span { color: #5f6578; }
+.chat-transcript { min-height: 130px; max-height: 400px; overflow: auto; }
+.chat-transcript p { padding: 10px 0; border-bottom: 1px solid #e7eaf1; }
+.chat-form { display: grid; gap: 10px; margin-top: 20px; }
+.chat-form textarea { min-height: 90px; padding: 12px; border: 1px solid #c9d2e3; border-radius: 9px; font: inherit; }
+.chat-form button { justify-self: start; }
+.chat-handoff { margin-top: 24px; }
+.chat-handoff a { color: #1848b1; }
+.consent-box { display: flex; gap: 10px; align-items: start; margin: 12px 0; }
 @media (max-width: 540px) { .auth-card { padding: 24px; } .account-panel dl { grid-template-columns: 1fr; } .application-list li { flex-direction: column; } }

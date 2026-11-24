@@ -42,13 +42,14 @@ npm run preview   # serve the production bundle locally
 
 - `/` — candidate and visitor landing page with a clearly labelled, non-functional assistant preview.
 - `/staff` — responsive responsible-user dashboard shell, now guarded by an authenticated staff role.
-- `/login`, `/register`, `/activate`, `/candidate` — SA-28 account flows and candidate read-only space.
+- `/login`, `/register`, `/activate`, `/candidate` — account flows, candidate profile/applications, and linked conversation continuation.
+- `/chat` — minimal SA-25/SA-26 visitor text conversation and SA-29 hand-off to candidate consent.
 
 ## API integration status
 
 `src/services/api` contains the configurable fetch client, typed response/error models, request-ID handling, and health service. The responsible workspace calls the backend’s implemented `GET /api/v1/health` endpoint. HTTP errors use the backend’s `{ error: { code, message, details, request_id } }` schema; network failures have a separate state. The client extracts `X-Request-ID`, falling back to the body’s `request_id`.
 
-The SA-5 OpenAPI contract includes current routes and marks later document, audio, and conversation-linking routes as future work. This frontend calls implemented SA-28 account and candidate-read routes; SA-29 conversation linking is not implemented yet.
+The frontend now includes a minimal `/chat` text conversation using SA-25/SA-26 and the SA-29 consent/transfer flow. It stores messages but does not generate assistant replies. Document and audio features remain future work. SA-29 requires the pending `0007_guest_account_link` migration before use against Neon.
 
 ## Project structure
 

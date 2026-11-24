@@ -46,7 +46,7 @@ def get_conversation(
     row = conn.execute(
         """SELECT id, visitor_session_id, channel, status, created_at
            FROM conversation
-           WHERE id = %s AND visitor_session_id = %s""",
+           WHERE id = %s AND visitor_session_id = %s AND user_id IS NULL""",
         (conversation_id, visitor_session_id),
     ).fetchone()
     if row is None:
@@ -75,7 +75,7 @@ def create_message(
     with conn.transaction():
         conversation = conn.execute(
             """SELECT status FROM conversation
-               WHERE id = %s AND visitor_session_id = %s
+               WHERE id = %s AND visitor_session_id = %s AND user_id IS NULL
                FOR UPDATE""",
             (conversation_id, visitor_session_id),
         ).fetchone()

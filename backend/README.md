@@ -137,3 +137,11 @@ issue single-use invitations for those accounts. The one-time
 The demo seed truncates data and must not be rerun.
 
 See `../docs/sa28-auth-roles.md` for endpoints, access rules, and deployment notes.
+
+## SA-29 guest conversation transfer
+
+SA-29 adds consented, permanent transfer of an active visitor session's text
+conversations to a candidate account. The transfer revokes visitor credentials;
+the candidate can read and continue the same conversation IDs and messages after
+the visitor session expires. Migration `0007_guest_account_link` is present in
+source but has not been applied to Neon. See `../docs/sa29-guest-account-link.md`.

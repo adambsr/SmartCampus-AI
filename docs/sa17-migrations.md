@@ -10,6 +10,7 @@ The migration chain uses SQL files in `database/schema/` as the schema source of
 | `0004_visitor_sessions` | Anonymous visitor sessions and creation throttling | `visitor_sessions_schema.sql` |
 | `0005_conversations` | Visitor-owned conversations and messages | `conversations_schema.sql` |
 | `0006_account_auth` | Account sessions, invitations, role audit, auth throttling | `account_auth_schema.sql` |
+| `0007_guest_account_link` | Consented visitor-to-candidate conversation transfer (pending application) | `guest_account_link_schema.sql` |
 
 The default Neon database is at `0006_account_auth`. Existing records were preserved when that additive migration was applied.
 

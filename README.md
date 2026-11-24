@@ -31,6 +31,8 @@ Vite serves the application at `http://localhost:5173` and proxies `/api` to the
 
 The application uses `DATABASE_URL` exclusively for database access. The default Neon database is at Alembic revision `0006_account_auth`. The migration chain includes catalog, user/application, documents/sync, visitor session, conversation, and account authentication schemas.
 
+SA-29 migration `0007_guest_account_link` is prepared but not yet applied. Its consented conversation transfer endpoints require that migration before use on Neon.
+
 Migrations are managed from the repository root with the pinned database requirements. For example:
 
 ```powershell

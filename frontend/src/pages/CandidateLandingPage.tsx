@@ -145,9 +145,7 @@ function CandidateLandingPage() {
               </div>
 
               <div className="hero-actions">
-                <Button type="button" className="hero-primary" onClick={() => setNotice('Le service conversationnel n’est pas encore connecté. Vous pouvez déjà explorer les programmes ci-dessous.')}>
-                  <Sparkles size={17} /> Démarrer une conversation
-                </Button>
+                <Link to="/chat" className="ui-button hero-primary"><Sparkles size={17} /> Démarrer une conversation</Link>
                 <a className="text-link" href="#programmes">Explorer les programmes <ArrowRight size={16} /></a>
               </div>
 

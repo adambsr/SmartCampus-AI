@@ -430,15 +430,16 @@ paths:
                 $ref: '#/components/schemas/Error'
         '422':
           $ref: '#/components/responses/ValidationError'
-  /conversations/{conversation_id}/link:
+  /visitor-sessions/{session_id}/link:
     post:
+      security: [{accountBearer: []}]
       tags:
       - Conversations
-      summary: Associer une conversation visiteur au compte candidat
-      description: Exige une authentification, le consentement explicite du candidat et la vérification de propriété
-        de la session.
+      summary: Transférer toutes les conversations d'une session visiteur au candidat
+      description: Exige un JWT de compte candidat, un JWT visiteur encore valide dans X-Visitor-Session-Token et un consentement explicite. Le transfert révoque définitivement les identifiants visiteurs de cette session.
       parameters:
-      - $ref: '#/components/parameters/ConversationId'
+      - {in: path, name: session_id, required: true, schema: {type: string, format: uuid}}
+      - {in: header, name: X-Visitor-Session-Token, required: true, schema: {type: string}}
       requestBody:
         required: true
         content:
@@ -448,18 +449,18 @@ paths:
               required:
               - consent
               properties:
-                consent:
-                  type: boolean
-                  const: true
+                consent: {type: boolean, const: true}
       responses:
         '200':
-          description: Conversation associée au compte
+          description: Session transférée et identifiants visiteurs révoqués
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                type: object
+                properties:
+                  session_id: {type: string, format: uuid}
+                  linked_at: {type: string, format: date-time}
+                  conversation_count: {type: integer}
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -472,8 +473,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
+        '410':
+          description: Visitor session expired
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /candidates/me/conversations:
+    get:
+      security: [{accountBearer: []}]
+      tags: [Candidats]
+      summary: Lister les conversations transférées au candidat authentifié
+      responses:
+        '200':
+          description: Liste des conversations du candidat
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, visitor_session_id, channel, status, created_at]
+                      properties:
+                        id: {type: string, format: uuid}
+                        visitor_session_id: {type: string, format: uuid}
+                        channel: {type: string, enum: [text]}
+                        status: {type: string, enum: [active, closed]}
+                        created_at: {type: string, format: date-time}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /candidates/me/conversations/{conversation_id}:
+    get:
+      security: [{accountBearer: []}]
+      tags: [Candidats]
+      summary: Lire une conversation transférée et son historique
+      parameters:
+      - $ref: '#/components/parameters/ConversationId'
+      responses:
+        '200':
+          description: Conversation et messages conservés
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Conversation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /candidates/me/conversations/{conversation_id}/messages:
+    post:
+      security: [{accountBearer: []}]
+      tags: [Candidats]
+      summary: Continuer une conversation transférée par message texte
+      parameters:
+      - $ref: '#/components/parameters/ConversationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/VisitorTextMessageCreate'}
+      responses:
+        '201':
+          description: Message conservé dans la conversation du candidat
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Message'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /documents:
     get:
       tags:

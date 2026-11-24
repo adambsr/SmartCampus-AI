@@ -60,4 +60,4 @@ Never run the demo seed for this work: it truncates tables. Do not use `TEST_DAT
 
 ## SA-29 hand-off
 
-Signing in or registering does not link an existing guest conversation. SA-29 must require an account Bearer token, separate proof of the visitor session, and explicit consent before making an additive association. The frontend's account flow does not clear any visitor credential.
+The SA-29 transfer is implemented in source and documented in `sa29-guest-account-link.md`. Its additive migration `0007_guest_account_link` is pending approval. Signing in or registering alone still does not link a guest conversation; explicit consent and separate visitor ownership proof are required.

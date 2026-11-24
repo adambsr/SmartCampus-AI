@@ -28,6 +28,7 @@ type RequestOptions = {
   signal?: AbortSignal
   auth?: boolean
   retry?: boolean
+  headers?: Record<string, string>
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
@@ -39,6 +40,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<A
         Accept: 'application/json',
         ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
         ...(options.auth && accountToken ? { Authorization: `Bearer ${accountToken}` } : {}),
+        ...options.headers,
       },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       credentials: 'include',
@@ -78,5 +80,6 @@ export const apiClient = {
   getAuthenticated: <T>(path: string, signal?: AbortSignal) => request<T>(path, { signal, auth: true }),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
   postAuthenticated: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body, auth: true }),
+  postAuthenticatedWithHeaders: <T>(path: string, body: unknown, headers: Record<string, string>) => request<T>(path, { method: 'POST', body, auth: true, headers }),
   patchAuthenticated: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body, auth: true }),
 }

@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import CandidateLandingPage from './pages/CandidateLandingPage'
 import CandidateAccountPage from './pages/CandidateAccountPage'
 import AuthPage from './pages/AuthPage'
+import GuestChatPage from './pages/GuestChatPage'
 import ResponsibleDashboard from './pages/ResponsibleDashboard'
 import { AuthProvider } from './components/shared/AuthProvider'
 import { useAuth } from './components/shared/AuthContext'
@@ -24,6 +25,7 @@ function App() {
           <Route path="/login" element={<AuthPage mode="login" />} />
           <Route path="/register" element={<AuthPage mode="register" />} />
           <Route path="/activate" element={<AuthPage mode="activate" />} />
+          <Route path="/chat" element={<GuestChatPage />} />
           <Route path="/candidate" element={<ProtectedRoute><CandidateAccountPage /></ProtectedRoute>} />
           <Route path="/staff" element={<ProtectedRoute staff><ResponsibleDashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />

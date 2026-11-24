@@ -61,7 +61,7 @@ def _ip_hmac(client_ip: str, settings: Settings) -> str:
 
 def _session_expired(row: dict[str, Any], now: datetime) -> bool:
     return (
-        row["status"] == "expired"
+        row["status"] != "active"
         or now >= row["idle_expires_at"]
         or now >= row["absolute_expires_at"]
     )
@@ -69,7 +69,7 @@ def _session_expired(row: dict[str, Any], now: datetime) -> bool:
 
 def _expiry_update(conn: Connection, session_id: UUID) -> None:
     conn.execute(
-        "UPDATE visitor_session SET status = 'expired' WHERE id = %s AND status <> 'expired'",
+        "UPDATE visitor_session SET status = 'expired' WHERE id = %s AND status = 'active'",
         (session_id,),
     )
 
@@ -213,7 +213,8 @@ def get_visitor_session(
                 status_code=404,
             )
         if _session_expired(row, now):
-            _expiry_update(conn, session_id)
+            if row["status"] == "active":
+                _expiry_update(conn, session_id)
             expired = True
         elif claims["exp"] <= int(now.timestamp()):
             raise AppError(
@@ -293,7 +294,8 @@ def refresh_visitor_session(
                 status_code=404,
             )
         if _session_expired(row, now):
-            _expiry_update(conn, session_id)
+            if row["status"] == "active":
+                _expiry_update(conn, session_id)
             expired = True
         elif not hmac.compare_digest(row["refresh_token_hash"], _refresh_hash(refresh_token)):
             raise AppError(

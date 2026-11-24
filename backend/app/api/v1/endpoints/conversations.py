@@ -58,20 +58,18 @@ def create_conversation(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     db: Connection = Depends(get_db),
 ) -> dict:
-    session = _authenticated_session(credentials, db)
-    session_id = session["id"]
-    if body.visitor_session_id is not None and body.visitor_session_id != session_id:
-        raise AppError(
-            code="VISITOR_SESSION_OWNERSHIP_MISMATCH",
-            message="The request session ID does not match the Bearer token.",
-            status_code=403,
+    with db.transaction():
+        session = _authenticated_session(credentials, db)
+        session_id = session["id"]
+        if body.visitor_session_id is not None and body.visitor_session_id != session_id:
+            raise AppError(
+                code="VISITOR_SESSION_OWNERSHIP_MISMATCH",
+                message="The request session ID does not match the Bearer token.",
+                status_code=403,
+            )
+        return service.create_conversation(
+            db, visitor_session_id=session_id, channel=body.channel, language=body.language,
         )
-    return service.create_conversation(
-        db,
-        visitor_session_id=session_id,
-        channel=body.channel,
-        language=body.language,
-    )
 
 
 @router.get(
@@ -85,10 +83,11 @@ def get_conversation(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     db: Connection = Depends(get_db),
 ) -> dict:
-    session = _authenticated_session(credentials, db)
-    return service.get_conversation(
-        db, conversation_id=conversation_id, visitor_session_id=session["id"]
-    )
+    with db.transaction():
+        session = _authenticated_session(credentials, db)
+        return service.get_conversation(
+            db, conversation_id=conversation_id, visitor_session_id=session["id"]
+        )
 
 
 @router.post(
@@ -113,11 +112,9 @@ def create_message(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     db: Connection = Depends(get_db),
 ) -> dict:
-    session = _authenticated_session(credentials, db)
-    return service.create_message(
-        db,
-        conversation_id=conversation_id,
-        visitor_session_id=session["id"],
-        content=body.content,
-        language=body.language,
-    )
+    with db.transaction():
+        session = _authenticated_session(credentials, db)
+        return service.create_message(
+            db, conversation_id=conversation_id, visitor_session_id=session["id"],
+            content=body.content, language=body.language,
+        )
