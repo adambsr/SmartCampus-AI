@@ -1,32 +1,24 @@
 # SmartCampus AI frontend
 
-React and TypeScript interfaces for the SA-8 frontend foundation. The app contains the approved candidate/visitor landing screen and a responsible-user workspace shell, plus a reusable client for the FastAPI service.
+React, TypeScript, Vite, Tailwind CSS, and project-owned shadcn-style components for the SmartCampus AI web application. The frontend connects to the FastAPI APIs for catalog data, visitor and candidate conversations, candidate profiles and applications, and staff account management.
 
 ## Prerequisites
 
 - Node.js 22.12 or newer
 - npm
-- The SmartCampus AI FastAPI backend for the health diagnostic
+- The FastAPI backend for API-backed screens
 
 ## Install and run
 
-From `SmartCampus-AI/frontend`:
+From `frontend/`:
 
 ```powershell
 npm install
-Copy-Item .env.example .env.local
+Copy-Item .env.example .env.local  # optional; configure only when needed
 npm run dev
 ```
 
-Vite serves the app at `http://localhost:5173`. In development, requests to `/api` use the Vite proxy to reach FastAPI at `http://127.0.0.1:8000`; leave `VITE_API_BASE_URL` empty to use this same-origin proxy. `VITE_ACADEMIC_YEAR` supplies the academic-year label shown in the staff workspace.
-
-Start FastAPI in another terminal from `SmartCampus-AI/backend`. The checked-in `backend/.env.example` allows `http://localhost:5173`, which matches Vite:
-
-```powershell
-uv run fastapi dev
-```
-
-Copy `backend/.env.example` to `backend/.env` if you have not configured the backend locally. Account login requires a distinct `ACCOUNT_JWT_SECRET`; local HTTP development also requires `AUTH_COOKIE_SECURE=false`. These settings belong in the ignored backend environment file, not the frontend `.env.local`.
+Vite serves the app at `http://localhost:5173`. In development, `/api` requests are proxied to FastAPI at `http://127.0.0.1:8000`; leave `VITE_API_BASE_URL` empty to use the proxy. The backend CORS settings should allow `http://localhost:5173` when calling it directly.
 
 ## Commands
 
@@ -40,50 +32,44 @@ npm run preview   # serve the production bundle locally
 
 ## Routes
 
-- `/` — candidate and visitor landing page with a clearly labelled, non-functional assistant preview.
-- `/staff` — responsive responsible-user dashboard shell, now guarded by an authenticated staff role.
-- `/login`, `/register`, `/activate`, `/candidate` — account flows, candidate profile/applications, and linked conversation continuation.
-- `/chat` — minimal SA-25/SA-26 visitor text conversation and SA-29 hand-off to candidate consent.
+| Route | Access | Screen |
+| --- | --- | --- |
+| `/` | Public | Landing page with links to the catalog and visitor chat |
+| `/catalog` | Public | Searchable academic program catalog |
+| `/programs/:code` | Public | Program details, published admission data, eligibility check, campaign, and sourced tariffs |
+| `/chat` | Public | Visitor text session and conversation storage; assistant replies are not generated |
+| `/login` | Public | Sign in |
+| `/register` | Public | Candidate registration |
+| `/activate` | Public | Staff account activation using an invitation token |
+| `/candidate` | Candidate | Candidate profile, applications, linked conversations, and transfer consent |
+| `/candidate/conversations/:id` | Candidate | Read and continue an associated conversation |
+| `/staff` | Staff | Staff workspace and candidate dossier lookup |
+| `/staff/dossiers` and `/staff/dossiers/:id` | Academic staff or interviewer | Candidate dossier lookup and read-only dossier |
+| `/staff/users` | Admin | Staff account management, provisioning, and invitations |
 
-## API integration status
+Protected routes enforce account roles in the frontend and rely on backend authorization for data access. Candidate registration and staff activation use the authentication API. Admin invitations are displayed once for manual delivery; the application does not send invitation email.
 
-`src/services/api` contains the configurable fetch client, typed response/error models, request-ID handling, and health service. The responsible workspace calls the backend’s implemented `GET /api/v1/health` endpoint. HTTP errors use the backend’s `{ error: { code, message, details, request_id } }` schema; network failures have a separate state. The client extracts `X-Request-ID`, falling back to the body’s `request_id`.
+## API and data behavior
 
-The frontend now includes a minimal `/chat` text conversation using SA-25/SA-26 and the SA-29 consent/transfer flow. It stores messages but does not generate assistant replies. Document and audio features remain future work. SA-29 requires the pending `0007_guest_account_link` migration before use against Neon.
+Typed API clients are in `src/services/api/`. The catalog screens load real program, admission, eligibility, campaign, and tariff responses. Candidate and staff screens use the profile, application, conversation, dossier, and admin APIs. Empty or unpublished backend data is shown as such; illustrative Stitch values are not used as production data.
 
-## Project structure
+Visitor session credentials remain in tab `sessionStorage`. A signed-in candidate can explicitly consent to transfer the entire visitor session and its conversations to their account. Transfer invalidates that visitor session. The visitor chat stores text messages but does not produce assistant responses. See [SA-29 conversation transfer](../docs/sa29-guest-account-link.md).
+
+The frontend does not access the database directly. Configure backend secrets and database settings in the backend environment file as described in the [backend guide](../backend/README.md). The configured Neon database was confirmed at migration `0007_guest_account_link` on 2026-11-27. Other database environments must apply that migration before transfer works; the frontend does not apply migrations.
+
+## Design and structure
+
+The approved visual system and screen requirements are documented in [DESIGN.md](DESIGN.md) and [STITCH_PROMPTS.md](STITCH_PROMPTS.md).
 
 ```text
 src/
-  components/
-    shared/       # API diagnostic
-    ui/           # reusable shadcn-style primitives
-  lib/            # class-name utility
-  pages/          # candidate and responsible screens
-  services/api/   # typed HTTP client and health service
-  App.tsx         # React Router routes
-  App.css         # responsive screen styles
-  index.css       # theme tokens and base styles
-design-references/ # preserved Google Stitch exports
+  components/shared/ # auth context, role shells, dialogs, and shared states
+  components/ui/     # reusable UI primitives
+  pages/             # public, candidate, staff, and admin routes
+  services/api/      # typed API clients
+  App.tsx            # React Router routes and role gates
+  sc.css             # shared screen styles and design tokens
+  index.css          # base styles and fonts
 ```
 
-The UI primitives live in `src/components/ui` and follow the shadcn/ui project-owned component pattern. Lucide React supplies interface icons; Tailwind CSS is configured through its Vite plugin.
-
-## Deferred by SA-8 scope
-
-The original SA-8 scope deferred authentication and protected routes; SA-28 now supplies them. Profile editing, admissions operations, a live AI conversation, and notifications remain future work. The dashboard modules stay explanatory until their actual destinations exist.
-
-## SA-28 account interface
-
-The frontend now has `/login`, `/register`, `/activate`, and a protected `/candidate`
-page. `/staff` requires an authenticated responsible-user role. Access JWTs stay in
-memory; on reload the client requests a fresh one with the HttpOnly refresh cookie.
-Logout revokes the backend session. The development server proxies `/api` to the
-local FastAPI backend so browser cookies remain on the same origin. The staff
-dashboard modules remain presentation shells, while the identity and route guard
-use the backend account API.
-
-The default Neon database has the additive SA-28 migration applied. A local or
-other deployment must apply migrations through `0006_account_auth` and configure
-an account signing secret before these flows are usable. See
-`../docs/sa28-auth-roles.md`.
+Lucide React supplies interface icons. Tailwind CSS is configured through its Vite plugin; shared controls follow the project-owned shadcn component pattern.

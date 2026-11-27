@@ -41,6 +41,14 @@ The API is served at http://127.0.0.1:8000. The FastAPI CLI discovers the root
 
 - `GET /` — preserved FastAPI CLI starter response
 - `GET /api/v1/health` — health check
+- `/api/v1/institutions` and `/api/v1/programs` — institution list, catalog search, and program detail
+- `/api/v1/programs/{code}/admission`, `/eligibility`, and `/tariffs`; `/api/v1/campaigns` — admission information
+- `/api/v1/visitor-sessions` and `/api/v1/conversations` — visitor sessions and text conversations
+- `/api/v1/auth` — registration, login, refresh, logout, invitation activation, and current account
+- `/api/v1/candidates` — candidate profile, application list, and authorized dossier reads
+- `/api/v1/visitor-sessions/{session_id}/link` — consented visitor-session transfer to a candidate account
+- `/api/v1/candidates/me/conversations` — linked conversation list, read, and continuation
+- `/api/v1/admin/users` — admin-only staff provisioning, updates, and invitation issuance
 - `/docs` — Swagger UI
 - `/redoc` — ReDoc
 - `/openapi.json` — OpenAPI schema
@@ -96,7 +104,8 @@ The backend uses:
 Both dependencies are declared in `pyproject.toml` and locked in `uv.lock`.
 
 Database schema and demo data are managed in the repository's `database/`
-directory. The default Neon branch is at migration `0006_account_auth`. The SA-18
+directory. The configured Neon database was at migration
+`0007_guest_account_link` when checked on 2026-11-27. The SA-18
 seeder truncates application tables and requires `--confirm-reset`; never run it
 against the default Neon database or records you need to preserve.
 
@@ -118,9 +127,13 @@ pyproject.toml                  Dependencies and pytest configuration
 uv.lock                         Locked dependency versions
 ```
 
-Database integration, migrations, visitor authentication, and account
-authentication have been added after the original SA-7 foundation. External AI
-services and SA-29 guest conversation linking remain future work.
+Database integration, migrations, visitor authentication, account authentication,
+candidate reads, staff provisioning, and the SA-29 consented guest-conversation
+linking flow are implemented. The visitor conversation API stores text messages;
+assistant response generation is not implemented. Migration
+`0007_guest_account_link` is applied to the configured Neon database. Other
+database environments must apply it before enabling transfer. See
+`../docs/sa29-guest-account-link.md`.
 
 ## SA-28 account authentication
 
@@ -143,5 +156,6 @@ See `../docs/sa28-auth-roles.md` for endpoints, access rules, and deployment not
 SA-29 adds consented, permanent transfer of an active visitor session's text
 conversations to a candidate account. The transfer revokes visitor credentials;
 the candidate can read and continue the same conversation IDs and messages after
-the visitor session expires. Migration `0007_guest_account_link` is present in
-source but has not been applied to Neon. See `../docs/sa29-guest-account-link.md`.
+the visitor session expires. Migration `0007_guest_account_link` was confirmed
+applied to the configured Neon database on 2026-11-27. See
+`../docs/sa29-guest-account-link.md`.

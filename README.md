@@ -1,6 +1,6 @@
 # SmartCampus AI
 
-SmartCampus AI is a FastAPI and React application backed by PostgreSQL on Neon. The current implementation includes the admission catalog and applications, visitor sessions and conversations (SA-25/SA-26), account authentication and roles (SA-28), plus a React account interface.
+SmartCampus AI is a FastAPI and React application backed by PostgreSQL. It provides a public academic-program catalog and detail pages, candidate accounts and application/profile views, visitor conversations with consented transfer to candidate accounts, and role-restricted staff and admin workspaces. The frontend also includes authentication, account activation, staff provisioning, and candidate dossier views.
 
 ## Local setup
 
@@ -29,9 +29,9 @@ Vite serves the application at `http://localhost:5173` and proxies `/api` to the
 
 ## Database and migrations
 
-The application uses `DATABASE_URL` exclusively for database access. The default Neon database is at Alembic revision `0006_account_auth`. The migration chain includes catalog, user/application, documents/sync, visitor session, conversation, and account authentication schemas.
+The application uses `DATABASE_URL` exclusively for database access. The configured Neon database was at Alembic revision `0007_guest_account_link` when checked on 2026-11-27. The migration chain includes catalog, user/application, documents/sync, visitor session, conversation, account authentication, and guest-account linking schemas.
 
-SA-29 migration `0007_guest_account_link` is prepared but not yet applied. Its consented conversation transfer endpoints require that migration before use on Neon.
+The consented conversation transfer endpoints require `0007_guest_account_link`; it is applied to the configured Neon database. Other database environments must apply it before using transfer.
 
 Migrations are managed from the repository root with the pinned database requirements. For example:
 
@@ -44,15 +44,16 @@ Do not downgrade, reset, reseed, or run the demo seeder against the default Neon
 ## Sign in
 
 - Candidate: open `/register`, create an account, then sign in at `/login`.
-- Admin: sign in with the provisioned admin account. The admin can use `/staff` and manage users through the API docs at `http://127.0.0.1:8000/docs`.
+- Admin: sign in with the provisioned admin account. The admin workspace is at `/staff`; account provisioning and invitations are at `/staff/users`.
 - Staff: an admin creates a pending staff account, issues an invitation, and shares the returned one-time token with the recipient. The recipient opens `/activate`, sets a password, then signs in at `/login`.
 
-The API docs expose `POST /api/v1/auth/login`, `GET/POST /api/v1/admin/users`, and `POST /api/v1/admin/users/{user_id}/invitations`. Invitation delivery is manual; the system does not send email. See [SA-28 account authentication and roles](docs/sa28-auth-roles.md).
+Invitation delivery is manual; the system does not send email. See [SA-28 account authentication and roles](docs/sa28-auth-roles.md) and the [frontend guide](frontend/README.md) for routes and local setup.
 
 ## Documentation
 
 - [SA-18 demo data and seeder](docs/sa18-demo-data.md)
 - [SA-17 migrations](docs/sa17-migrations.md)
 - [SA-28 authentication and role rules](docs/sa28-auth-roles.md)
+- [SA-29 guest conversation transfer](docs/sa29-guest-account-link.md)
 - [Backend guide](backend/README.md)
 - [Frontend guide](frontend/README.md)
