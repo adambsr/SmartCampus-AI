@@ -5,6 +5,7 @@ import {
   Menu, PanelLeftClose, Settings2, ShieldCheck, UserRound, Users, X,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
+import { staffRoleName } from '../components/shared/staff-role'
 import { useAuth } from '../components/shared/AuthContext'
 import { HealthCheck } from '../components/shared/HealthCheck'
 import { Badge } from '../components/ui/badge'
@@ -20,7 +21,7 @@ const modules = [
   { title: 'Programmes & référentiels', status: 'Référentiel prévu', description: 'Présentation des filières d’ingénierie IIT et des parcours de gestion ISB pour l’orientation académique.', icon: BookOpen, foot: `Référentiel ${academicYear}` },
 ]
 
-const roleLabels = ['Superviseur Académique IIT / ISB', 'Jury d’Entretien', 'Direction', 'Administration Système']
+const roleLabels = ['Responsable entretiens et rendez-vous', 'Administrateur']
 
 const navItems = [
   { label: 'Vue d’ensemble', icon: LayoutDashboard, href: '#overview' },
@@ -37,7 +38,7 @@ function ResponsibleDashboard() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [language, setLanguage] = useState('fr')
   const [notice, setNotice] = useState('')
-  const roleName = account?.role === 'academic_staff' ? 'Responsable académique' : account?.role === 'interviewer' ? 'Responsable entretien' : account?.role === 'direction' ? 'Direction' : 'Administration'
+  const roleName = staffRoleName(account?.role)
   async function leave() {
     try {
       await signOut()
@@ -71,7 +72,7 @@ function ResponsibleDashboard() {
 
           <section className="modules-section" id="modules"><div className="modules-heading"><div><h2>Modules fonctionnels du pôle</h2><p>Périmètres de service prévus pour l’admission et l’orientation pédagogique.</p></div><Badge className="year-badge">Spécifications {academicYear}</Badge></div><div className="module-grid">{modules.map(({ title, status, description, icon: Icon, foot }) => <Card className="module-card" key={title}><div className="module-card__top"><span className="module-card__icon"><Icon size={20} /></span><Badge className="module-status">{status}</Badge></div><h3>{title}</h3><p>{description}</p><div className="module-card__footer"><span>{foot}</span><ArrowRight size={16} aria-hidden="true" /></div></Card>)}</div></section>
 
-          <section className="workspace-card" id="workspace"><span className="workspace-icon"><ClipboardList size={31} /><span><LockKeyhole size={14} /></span></span><p className="workspace-eyebrow">Accès personnalisé par rôle</p><h2>Votre rôle : {roleName}</h2><p className="workspace-copy">Votre accès à cet espace a été vérifié. Les modules ci-dessous restent des aperçus ; les données de candidature sont protégées par les règles d’accès du backend.</p><div className="role-list">{roleLabels.map((role) => <Badge key={role}>{role}</Badge>)}</div><div className="workspace-actions"><Button type="button" onClick={() => setNotice('Le guide staff sera disponible prochainement.')}><BookOpen size={16} /> Consulter le guide staff</Button><Button type="button" variant="secondary" onClick={() => setNotice('Les coordonnées de la direction académique ne sont pas configurées dans cette version.')}><CircleHelp size={16} /> Contacter la direction académique</Button></div></section>
+          <section className="workspace-card" id="workspace"><span className="workspace-icon"><ClipboardList size={31} /><span><LockKeyhole size={14} /></span></span><p className="workspace-eyebrow">Accès personnalisé par rôle</p><h2>Votre rôle : {roleName}</h2><p className="workspace-copy">Votre accès à cet espace a été vérifié. Les modules ci-dessous restent des aperçus ; les données de candidature sont protégées par les règles d’accès du backend.</p><div className="role-list">{roleLabels.map((role) => <Badge key={role}>{role}</Badge>)}</div><div className="workspace-actions"><Button type="button" onClick={() => setNotice('Le guide staff sera disponible prochainement.')}><BookOpen size={16} /> Consulter le guide staff</Button><Button type="button" variant="secondary" onClick={() => setNotice('Les coordonnées de l’administration ne sont pas configurées dans cette version.')}><CircleHelp size={16} /> Contacter l’administration</Button></div></section>
 
           <section className="compliance-grid" aria-label="Informations institutionnelles"><Card><ShieldCheck size={19} /><div><h3>Confidentialité &amp; conformité</h3><p>Les dossiers académiques doivent être traités selon les règles de protection des données étudiantes.</p></div></Card><Card><GraduationCap size={19} /><div><h3>Accréditations nationales</h3><p>Les diplômes sont homologués et reconnus par le Ministère de l’Enseignement Supérieur et de la Recherche Scientifique de Tunisie.</p></div></Card><Card><PanelLeftClose size={19} /><div><h3>Paramétrage des commissions</h3><p>Les périmètres de travail dépendent du rôle et des responsabilités attribués.</p></div></Card></section>
 

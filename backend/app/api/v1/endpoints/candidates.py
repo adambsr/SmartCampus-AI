@@ -32,7 +32,8 @@ def my_applications(
 
 
 @router.get("/{candidate_id}", response_model=CandidateProfileResponse,
-            responses=PRIVATE_ERRORS, summary="Read an authorized candidate dossier")
+            responses=PRIVATE_ERRORS, summary="Read an authorized candidate dossier",
+            description="Candidates read their own profile; administrators read any candidate profile. Interviewers require an interview_scheduled application. No private conversations or authentication secrets are returned.")
 def candidate_profile(
     candidate_id: int, account: dict = Depends(get_current_account),
     db: Connection = Depends(get_db),

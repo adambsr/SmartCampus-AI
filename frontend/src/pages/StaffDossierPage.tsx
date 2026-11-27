@@ -3,9 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { StaffShell } from '../components/shared/StaffShell'
 import { LoadState } from '../components/shared/LoadState'
 import { staffApi, type CandidateDossier } from '../services/api/staff'
+import { useAuth } from '../components/shared/AuthContext'
 import { ApiError } from '../services/api/api-error'
 
 export default function StaffDossierPage() {
+  const { account } = useAuth()
   const { id } = useParams()
   const navigate = useNavigate()
   const validId = Boolean(id && Number.isSafeInteger(Number(id)) && Number(id) > 0)
@@ -35,5 +37,5 @@ export default function StaffDossierPage() {
     ['Matières préférées', dossier.favorite_subjects?.join(', ')], ['Centres d’intérêt', dossier.interests?.join(', ')],
     ['Objectif', dossier.career_goal], ['Contraintes', dossier.constraints], ['Langue préférée', dossier.preferred_language],
   ] : []
-  return <StaffShell><Link className="sc-back" to="/staff">← Retour à l’espace staff</Link><h1>Dossier candidat</h1><p>Consultation directe par identifiant numérique. L’accès dépend de votre rôle et de votre établissement.</p><form className="sc-search-row sc-panel" onSubmit={search}><label>Identifiant numérique du dossier<input inputMode="numeric" pattern="[0-9]+" value={query} onChange={(event) => setQuery(event.target.value)} required /></label><button className="sc-button">Consulter le dossier</button></form><LoadState loading={loading} error={error || (id && !validId ? 'Identifiant numérique invalide.' : '')}>{dossier?.id === Number(id) && <div className="sc-dossier"><div className="sc-panel sc-dossier-heading"><p className="sc-eyebrow">Dossier #{dossier.id} · Consultation en lecture seule</p><h2>{dossier.full_name}</h2></div><div className="sc-dossier-grid">{[['Identité et coordonnées', fields.slice(0, 6)], ['Parcours académique', fields.slice(6, 13)], ['Orientation et préférences', fields.slice(13)]].map(([title, group]) => <section className="sc-panel" key={title as string}><h2>{title as string}</h2><dl className="sc-facts">{(group as typeof fields).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Non renseigné'}</dd></div>)}</dl></section>)}</div></div>}</LoadState></StaffShell>
+  return <StaffShell><Link className="sc-back" to="/staff">← Retour à l’espace staff</Link><h1>Dossier candidat</h1><p>Consultation directe par identifiant numérique. {account?.role === 'admin' ? 'Vous pouvez consulter les profils des candidats IIT et ISB.' : 'Seuls les dossiers avec une candidature au statut entretien planifié sont accessibles.'}</p><form className="sc-search-row sc-panel" onSubmit={search}><label>Identifiant numérique du dossier<input inputMode="numeric" pattern="[0-9]+" value={query} onChange={(event) => setQuery(event.target.value)} required /></label><button className="sc-button">Consulter le dossier</button></form><LoadState loading={loading} error={error || (id && !validId ? 'Identifiant numérique invalide.' : '')}>{dossier?.id === Number(id) && <div className="sc-dossier"><div className="sc-panel sc-dossier-heading"><p className="sc-eyebrow">Dossier #{dossier.id} · Consultation en lecture seule</p><h2>{dossier.full_name}</h2></div><div className="sc-dossier-grid">{[['Identité et coordonnées', fields.slice(0, 6)], ['Parcours académique', fields.slice(6, 13)], ['Orientation et préférences', fields.slice(13)]].map(([title, group]) => <section className="sc-panel" key={title as string}><h2>{title as string}</h2><dl className="sc-facts">{(group as typeof fields).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Non renseigné'}</dd></div>)}</dl></section>)}</div></div>}</LoadState></StaffShell>
 }

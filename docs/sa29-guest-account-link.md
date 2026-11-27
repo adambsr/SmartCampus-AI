@@ -1,6 +1,6 @@
 # SA-29: Transfer visitor conversations to a candidate
 
-Status: implemented in source. Migration `0007_guest_account_link` has **not** been applied to Neon.
+Status: implemented in source. Migration `0007_guest_account_link` was applied to default Neon on 2026-11-27, as supplied by the project owner. Subsequent authorized read-only verification on 2026-11-27 confirmed default Neon at 0008_simplify_roles, including intact SA-29 conversation ownership references; no verification writes were performed.
 
 ## Requirement and behavior
 
@@ -16,4 +16,4 @@ The `/chat` page provides minimal text conversation storage using SA-25/SA-26; i
 
 ## Deployment
 
-Review `database/migrations/versions/0007_guest_account_link.py` and its SQL before applying it to the default Neon branch using `DATABASE_URL`. The migration is additive and has no backfill or deletion. Do not run the destructive demo seeder. No actual `.env` changes are required.
+Default Neon already has `0007_guest_account_link`. Other environments require their own approved migration application through `DATABASE_URL`. The migration is additive and has no backfill or deletion. Do not run the destructive demo seeder. No actual `.env` changes are required.

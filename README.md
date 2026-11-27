@@ -29,7 +29,7 @@ Vite serves the application at `http://localhost:5173` and proxies `/api` to the
 
 ## Database and migrations
 
-The application uses `DATABASE_URL` exclusively for database access. The configured Neon database was at Alembic revision `0007_guest_account_link` when checked on 2026-11-27. The migration chain includes catalog, user/application, documents/sync, visitor session, conversation, account authentication, and guest-account linking schemas.
+The application uses `DATABASE_URL` exclusively for database access. The configured default Neon database is at Alembic revision `0008_simplify_roles`, matching the repository head, confirmed by authorized read-only verification on 2026-11-27. The migration chain includes catalog, user/application, documents/sync, visitor session, conversation, account authentication, and guest-account linking schemas.
 
 The consented conversation transfer endpoints require `0007_guest_account_link`; it is applied to the configured Neon database. Other database environments must apply it before using transfer.
 
@@ -57,3 +57,9 @@ Invitation delivery is manual; the system does not send email. See [SA-28 accoun
 - [SA-29 guest conversation transfer](docs/sa29-guest-account-link.md)
 - [Backend guide](backend/README.md)
 - [Frontend guide](frontend/README.md)
+
+## Professor actor simplification 2026 11 27
+
+The active roles are candidate, interviewer and admin; Visiteur remains anonymous. Responsable entretiens et rendez-vous and Administrateur are independent actors. Admins can read candidate profiles across IIT/ISB; interviewer reads still require an interview_scheduled application. Private candidate conversations stay candidate-owned. Staff provisioning offers interviewer/admin only, without institution assignment.
+
+Default Neon has 0008_simplify_roles applied after 0007_guest_account_link, confirmed by read-only verification on 2026-11-27. Other environments require their own approved migration application. It disables former academic_staff/direction accounts as interviewers for explicit admin review, preserves account IDs/history and revokes their sessions and unused invitations. Never promote accounts automatically or run the seeder to migrate data. See [SA-17](docs/sa17-migrations.md) for the approval, recovery and coordinated rollout procedure. Future UML modules are not implemented by this refactor.

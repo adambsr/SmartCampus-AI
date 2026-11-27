@@ -16,10 +16,11 @@ function ProtectedRoute({ role = 'candidate', children }: { role?: 'candidate' |
   const { account, loading } = useAuth()
   if (loading) return <div className="auth-loading">Vérification de la session…</div>
   if (!account) return <Navigate to={`/login?next=${role === 'candidate' ? '/candidate' : '/staff'}`} replace />
+  if (!['candidate', 'interviewer', 'admin'].includes(account.role)) return <Navigate to="/login" replace />
   if (role === 'candidate' && account.role !== 'candidate') return <Navigate to="/staff" replace />
-  if (role !== 'candidate' && account.role === 'candidate') return <Navigate to="/candidate" replace />
+  if (role !== 'candidate' && !['interviewer', 'admin'].includes(account.role)) return <Navigate to="/candidate" replace />
   if (role === 'admin' && account.role !== 'admin') return <Navigate to="/staff" replace />
-  if (role === 'dossier' && account.role !== 'academic_staff' && account.role !== 'interviewer') return <Navigate to="/staff" replace />
+  if (role === 'dossier' && !['interviewer', 'admin'].includes(account.role)) return <Navigate to="/staff" replace />
   return children
 }
 

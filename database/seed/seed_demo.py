@@ -9,7 +9,7 @@ before loading:
 - IIT and ISB, the 31 real programs from catalog_inventory.csv (iit.tn / isb.tn),
   their admission rules, accepted backgrounds, published fees and IIT fee rules,
 - pathways between programs, one open admission campaign per school,
-- 5 passwordless staff accounts and 5 candidates whose applications sit at different statuses,
+- 2 passwordless professional accounts and 5 candidates whose applications sit at different statuses,
 - 5 official source documents and one sync job.
 
 Fees are copied from the websites and stay is_confirmed = false until the admissions
@@ -98,10 +98,7 @@ PATHWAYS = [
 
 STAFF = [
     ("admin@example.com", "Admin Plateforme", "admin", None),
-    ("academique.iit@example.com", "Responsable académique IIT", "academic_staff", "IIT"),
-    ("academique.isb@example.com", "Responsable académique ISB", "academic_staff", "ISB"),
-    ("entretien@example.com", "Responsable entretien", "interviewer", None),
-    ("direction@example.com", "Direction", "direction", None),
+    ("entretien@example.com", "Responsable entretiens et rendez-vous", "interviewer", None),
 ]
 
 # email, name, profile, program code, status path, recommendation (program, score, justification)
@@ -253,7 +250,7 @@ def seed(conn):
         cur.execute("""INSERT INTO app_user (email, full_name, role, institution_id)
                        VALUES (%s, %s, %s, %s) RETURNING id""", (email, name, role, inst.get(school)))
         users[email] = cur.fetchone()[0]
-    reviewer = users["academique.iit@example.com"]
+    reviewer = users["admin@example.com"]
 
     for email, name, profile, code, path, (rec_code, score, why) in CANDIDATES:
         cur.execute("INSERT INTO app_user (email, full_name) VALUES (%s, %s) RETURNING id", (email, name))

@@ -14,7 +14,9 @@ def run_sql_file(name: str) -> None:
     if context.is_offline_mode():
         op.execute(statement)
     else:
-        op.get_bind().exec_driver_sql(statement)
+        # These scripts have no bound parameters. Omit even an empty parameter
+        # collection so Psycopg leaves literal PostgreSQL '%' syntax untouched.
+        op.get_bind().exec_driver_sql(statement, execution_options={"no_parameters": True})
 
 
 def drop(tables: list[str], types: list[str], extra: list[str] | None = None) -> None:

@@ -42,7 +42,8 @@ def create_staff(
 
 
 @router.patch("/{user_id}", response_model=AccountPublic, responses=ADMIN_ERRORS,
-              summary="Change a staff role, institution, or account status")
+              summary="Change a staff role or account status",
+              description="Access changes revoke account sessions and unused invitations. Institution assignments are not supported.")
 def update_user(
     user_id: int, body: AccountUpdateRequest,
     admin: dict = Depends(require_admin), db: Connection = Depends(get_db),

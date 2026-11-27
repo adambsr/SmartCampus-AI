@@ -1,7 +1,7 @@
 import { apiClient, setAccountToken } from './client'
 import { ApiError } from './api-error'
 
-export type AccountRole = 'candidate' | 'academic_staff' | 'interviewer' | 'direction' | 'admin'
+export type AccountRole = 'candidate' | 'interviewer' | 'admin'
 
 export interface Account {
   id: number
@@ -21,23 +21,29 @@ export interface AuthResult {
 
 let restorePromise: Promise<Account> | null = null
 
-export async function login(email: string, password: string) {
-  const { data } = await apiClient.post<AuthResult>('/api/v1/auth/login', { email, password })
+function acceptSession(data: AuthResult): Account {
+  if (!['candidate', 'interviewer', 'admin'].includes(data.user.role)) {
+    setAccountToken(null)
+    throw new ApiError({ code: 'UNSUPPORTED_ACCOUNT_ROLE', message: 'Votre accès doit être revu par un administrateur.' })
+  }
   setAccountToken(data.access_token)
   return data.user
 }
 
+export async function login(email: string, password: string) {
+  const { data } = await apiClient.post<AuthResult>('/api/v1/auth/login', { email, password })
+  return acceptSession(data)
+}
+
 export async function register(email: string, full_name: string, password: string) {
   const { data } = await apiClient.post<AuthResult>('/api/v1/auth/register', { email, full_name, password })
-  setAccountToken(data.access_token)
-  return data.user
+  return acceptSession(data)
 }
 
 export async function restoreSession() {
   if (!restorePromise) {
     restorePromise = apiClient.post<AuthResult>('/api/v1/auth/refresh').then(({ data }) => {
-      setAccountToken(data.access_token)
-      return data.user
+      return acceptSession(data)
     }).finally(() => { restorePromise = null })
   }
   return restorePromise

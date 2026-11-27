@@ -5,7 +5,7 @@ Status: implemented in source; migration `0006_account_auth` and the private fir
 ## Boundaries
 
 - Visitor sessions and visitor-owned text conversations keep their SA-25/SA-26 Bearer JWT, refresh JSON body, lifetime, and ownership behavior. Account JWTs use a different signing secret, issuer, audience, kind, and database session.
-- The five PostgreSQL roles are `candidate`, `academic_staff`, `interviewer`, `direction`, and `admin`. Academic staff are scoped by `institution_id`; IIT and ISB use the same role with different institutions.
+- The active PostgreSQL/account roles are exclusively `candidate`, `interviewer`, and `admin`. Visitors remain anonymous. The professor decision of 2026-11-27 merges former academic-supervisor and Direction business responsibilities into Administrateur. Administrateur and Responsable entretiens et rendez-vous are independent actors. Default Neon has `0008_simplify_roles`, confirmed by read-only verification on 2026-11-27. Other environments require their own approved migration application before deploying this source version.
 - Candidate account registration is public and always creates `candidate` plus `candidate_profile`. Staff creation, invitations, and role/status changes require an admin account. Existing passwordless demo users cannot claim their rows through registration.
 - There is no email verification or automated invitation delivery in SA-28. Activation tokens are delivered manually by an admin. Password recovery is not included.
 
@@ -15,12 +15,10 @@ Status: implemented in source; migration `0006_account_auth` and the private fir
 | --- | --- |
 | Visitor | Own SA-25/SA-26 session and text conversation; public catalog. |
 | Candidate | Own profile and application status reads. |
-| Academic staff | Candidate dossier if its application or recommendation is for the staff member's institution. |
-| Interviewer | Candidate dossier with an `interview_scheduled` application. |
-| Direction | Account sign-in only until aggregate reports exist; no individual dossier access. |
-| Admin | Account list, pending staff creation, invitations, role/institution/status changes; no automatic individual dossier access. |
+| Responsable entretiens et rendez-vous (`interviewer`) | Read-only candidate profile with an `interview_scheduled` application; no unrelated admin operations. |
+| Administrateur (`admin`) | Any candidate profile across IIT/ISB; account list, pending interviewer/admin creation, activation invitations, staff-role and active-status changes. |
 
-All checks run in the backend. A caller-supplied candidate ID is not proof of ownership. `is_active`, the current role/institution, and session revocation are checked from PostgreSQL on every protected request. Role/status changes revoke the affected user's account sessions. Candidate accounts cannot be converted to staff accounts; provision a separate staff identity. The last active admin with a password cannot be demoted or deactivated.
+All checks run in the backend. A caller-supplied candidate ID is not proof of ownership. `is_active`, the current role, and session revocation are checked from PostgreSQL on every protected request. Effective role/institution/status changes revoke the affected user's account sessions and unused invitations; no-op updates preserve them. institution_id remains nullable for compatibility but staff assignment accepts only omitted/null values and grants no access. Candidate accounts cannot be converted to staff accounts; provision a separate staff identity. The last active admin with a password cannot be demoted or deactivated.
 
 ## Credentials and session lifetime
 
@@ -44,10 +42,10 @@ All checks run in the backend. A caller-supplied candidate ID is not proof of ow
 | `GET /api/v1/candidates/me/applications` | Read the candidate's application statuses. |
 | `GET /api/v1/candidates/{candidate_id}` | Scoped staff dossier read; IDs are `BIGINT`. |
 | `GET/POST /api/v1/admin/users` | List accounts or create a pending staff account. |
-| `PATCH /api/v1/admin/users/{user_id}` | Change staff role/institution or account active status; audit and revoke sessions. |
+| `PATCH /api/v1/admin/users/{user_id}` | Change staff role or account active status; audit and revoke sessions and unused invitations. |
 | `POST /api/v1/admin/users/{user_id}/invitations` | Issue a 24-hour, single-use activation token shown once. |
 
-Errors use the shared `{ "error": { "code", "message", "details", "request_id" } }` envelope. The SA-5 YAML now distinguishes account and visitor Bearer schemes. SA-5's candidate UUIDs were replaced with the implemented `BIGINT` account IDs. SA-5 routes for profile editing, documents, audio, assistant replies, and SA-29 conversation linking remain future scope.
+Errors use the shared `{ "error": { "code", "message", "details", "request_id" } }` envelope. The SA-5 YAML now distinguishes account and visitor Bearer schemes. SA-5's candidate UUIDs were replaced with the implemented `BIGINT` account IDs. Profile editing, documents, audio and assistant replies remain future scope. SA-29 session-wide conversation transfer and candidate conversation APIs are implemented and remain unchanged.
 
 ## Deployment preparation
 
@@ -60,4 +58,16 @@ Never run the demo seed for this work: it truncates tables. Do not use `TEST_DAT
 
 ## SA-29 hand-off
 
-The SA-29 transfer is implemented in source and documented in `sa29-guest-account-link.md`. Its additive migration `0007_guest_account_link` is pending approval. Signing in or registering alone still does not link a guest conversation; explicit consent and separate visitor ownership proof are required.
+The SA-29 transfer is implemented in source and documented in `sa29-guest-account-link.md`. Its additive migration `0007_guest_account_link` was applied to default Neon on 2026-11-27, and remains included in the verified 0008 migration chain. The subsequent authorized verification was read-only. Signing in or registering alone still does not link a guest conversation; explicit consent and separate visitor ownership proof are required.
+
+## Professor scope change and legacy accounts
+
+Migration `0008_simplify_roles` was applied by the project owner to default Neon and verified in an authorized read-only transaction on 2026-11-27. Two former academic_staff accounts and one former direction account are inactive interviewers, with three migration audit entries. There were no affected account sessions or unused invitations at migration time; zero remain unrevoked. It preserves account IDs, password hashes and historical references. Every obsolete-role account becomes an inactive interviewer, with its original role/institution/active state preserved in a system audit entry. Sessions and unused invitations are revoked. Existing candidate/interviewer/admin accounts retain their roles and sessions. No account is promoted automatically.
+
+An administrator must review each disabled account before choosing interviewer or admin and reactivating it. For passwordless accounts, issue a new invitation only after reviewing the intended role; activation sets the account active. Already activated accounts keep their password and use the existing status update. There is no new recovery or scheduling workflow.
+
+Audit role fields are historical text restricted to the five historical names. Normal audit entries require actor_user_id; only a system entry marked migration_reason=0008_simplify_roles may omit it. Legacy names in audit history do not authorize accounts.
+
+Appointment invitations are future interview functionality and are distinct from the existing manually delivered account activation invitations. Candidate listings, conversation summaries, QCM, interview results, appointment assignment, recommendation review, formation management, RAG/configuration tools, AI supervision and statistical dashboards are target UML responsibilities, not implemented modules. Staff cannot read private transcripts, hashes, or refresh credentials.
+
+See [SA-17](sa17-migrations.md) for the migration and rollout procedure.

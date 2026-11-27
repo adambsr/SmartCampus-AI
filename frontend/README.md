@@ -43,8 +43,8 @@ npm run preview   # serve the production bundle locally
 | `/activate` | Public | Staff account activation using an invitation token |
 | `/candidate` | Candidate | Candidate profile, applications, linked conversations, and transfer consent |
 | `/candidate/conversations/:id` | Candidate | Read and continue an associated conversation |
-| `/staff` | Staff | Staff workspace and candidate dossier lookup |
-| `/staff/dossiers` and `/staff/dossiers/:id` | Academic staff or interviewer | Candidate dossier lookup and read-only dossier |
+| `/staff` | Interviewer or admin | Staff workspace and candidate dossier lookup |
+| `/staff/dossiers` and `/staff/dossiers/:id` | Interviewer or admin | Candidate dossier lookup and read-only dossier |
 | `/staff/users` | Admin | Staff account management, provisioning, and invitations |
 
 Protected routes enforce account roles in the frontend and rely on backend authorization for data access. Candidate registration and staff activation use the authentication API. Admin invitations are displayed once for manual delivery; the application does not send invitation email.
@@ -55,7 +55,7 @@ Typed API clients are in `src/services/api/`. The catalog screens load real prog
 
 Visitor session credentials remain in tab `sessionStorage`. A signed-in candidate can explicitly consent to transfer the entire visitor session and its conversations to their account. Transfer invalidates that visitor session. The visitor chat stores text messages but does not produce assistant responses. See [SA-29 conversation transfer](../docs/sa29-guest-account-link.md).
 
-The frontend does not access the database directly. Configure backend secrets and database settings in the backend environment file as described in the [backend guide](../backend/README.md). The configured Neon database was confirmed at migration `0007_guest_account_link` on 2026-11-27. Other database environments must apply that migration before transfer works; the frontend does not apply migrations.
+The frontend does not access the database directly. Configure backend secrets and database settings in the backend environment file as described in the [backend guide](../backend/README.md). Default Neon was confirmed at migration `0008_simplify_roles` (repository head) by authorized read-only verification on 2026-11-27. Other database environments require their own approved migration application; SA-29 transfer requires at least 0007_guest_account_link; the frontend does not apply migrations.
 
 ## Design and structure
 
@@ -73,3 +73,7 @@ src/
 ```
 
 Lucide React supplies interface icons. Tailwind CSS is configured through its Vite plugin; shared controls follow the project-owned shadcn component pattern.
+
+## Simplified actors and release dependency
+
+The active account roles are candidate, interviewer and admin. Administrateur can read any candidate profile using the existing dossier lookup; Responsable entretiens et rendez-vous requires an interview_scheduled application. Both are independent actors. Only admin manages professional accounts, selecting interviewer/admin with no institution assignment. No private transcripts, summaries, QCM or future scheduling/reporting modules are exposed. Default Neon already has 0008_simplify_roles applied, confirmed by read-only verification on 2026-11-27. Other environments require approved migration application before deploying this release. See SA-17 for the disabled legacy-account review policy.

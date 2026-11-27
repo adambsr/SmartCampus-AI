@@ -4,6 +4,20 @@
 
 **Evidence labels.** **Official** means stated in the supplied PDF/DOCX or shown in VisioraAI. **Recommendation** means engineering interpretation for planning; confirm decisions that affect shared contracts or stack choices with the team. The backlog inspection was read-only. No project records were changed.
 
+## Project decision 2026 11 27 Simplify actors and access
+
+**Approved professor-requested scope change.** SmartCampus AI prioritizes the intelligent chatbot, LLM/RAG, multilingual conversation, academic orientation and agentic workflows. Its current business actors are exactly **Visiteur**, **Candidat**, **Responsable entretiens et rendez-vous**, and **Administrateur**. The professional actors are independent; neither inherits the other. Authenticated roles are exclusively `candidate`, `interviewer`, `admin`; visitors remain anonymous. Former academic-supervisor and Direction business responsibilities belong to Administrateur.
+
+**Implemented with the applied and verified 0008 migration:** existing visitor/candidate authentication, ownership, conversations and explicit guest transfer; public IIT/ISB catalog; candidate profile/application reads; admin account provisioning, role/status management and activation invitations; numeric candidate-profile lookup by admins across institutions and by interviewers only when an application is `interview_scheduled`. institution_id grants no staff permissions. Professional roles receive no private conversation history or authentication secrets.
+
+**Target UML only:** interviewer ready-candidate listings, relevant conversation summaries, QCM results, interview preparation/outcomes, appointments and appointment invitations; administrator formation management, RAG sources, orientation/QCM/notification configuration, recommendation verification/confirmation/adjustment, AI supervision, logs and statistical dashboards. These business responsibilities do not authorize new modules in this refactor. Account activation invitations are already implemented and distinct from future appointment invitations. Chat messages are stored; this refactor adds no assistant generation.
+
+**Approved account migration policy:** existing academic_staff/direction accounts keep IDs, credentials and historical references but become inactive interviewers for explicit administrator review. Preserve their original role, institution and active state in system audit records; revoke their sessions and unused invitations. No automatic promotion. Admins must explicitly review the desired role before reactivation or issuing a new activation invitation. Existing candidate/interviewer/admin roles and sessions are preserved.
+
+**Delivery boundaries:** preserve SA-25/26/29 behavior, approved Stitch visuals, IIT/ISB catalog and existing data. The project owner applied 0008_simplify_roles to default Neon; authorized read-only verification on 2026-11-27 confirmed that it matches the repository head. The enum has exactly candidate/interviewer/admin; three obsolete-role accounts are inactive interviewers with historical state recorded in the audit. All 10 original account IDs, the usable administrator, candidate records, three conversations/messages and all 31 original program codes remain present with valid references. No affected sessions or unused invitations existed at migration time and none remain unrevoked. Verification performed no database writes. Further migrations, commits and pushes require separate authorization. See SA-17 and SA-28 for access and rollout details.
+
+**Evidence precedence:** this dated decision supersedes the old actor taxonomy in the historical requirements below and AGENTS.md. The original university PDF and Sprint1_Task_Distribution.docx remain unchanged historical sources. Historical backlog state, actor names and engineering recommendations below describe the earlier evidence and do not override this decision.
+
 ## 1. Project overview
 
 ### Objective and problem
@@ -14,7 +28,7 @@ It gradually gathers academic level, interests, preferred subjects, career goals
 
 ### Target users
 
-The project brief identifies these actors and needs (PDF pp. 2–3):
+Historical project brief actors and needs (PDF pp. 2–3), superseded by the dated actor decision above:
 
 - **Candidate / prospective student:** ask questions, compare programs, receive explanations and personalized recommendations, pre-register, complete a targeted QCM, and track appointments and application progress.
 - **IIT academic supervisor and ISB academic supervisor:** review candidates and recommendations, inspect QCM results, confirm or adjust recommendations, manage their institution's program information, and view orientation statistics.

@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: SmartCampus AI - API candidats, conversations et documents
   version: 1.0.0
-  description: 'Contrat API SA-5. Authentification des routes privées par Bearer JWT. Limites proposées : 20 messages/minute/session
+  description: 'Contrat API SA-5. Décision du 27 novembre 2026 : quatre acteurs métier (Visiteur, Candidat, Responsable entretiens et rendez-vous, Administrateur), trois rôles de compte (candidate, interviewer, admin), sans héritage entre les deux acteurs professionnels. Les opérations marquées x-implementation-status future ne sont pas implémentées. Authentification des routes privées par Bearer JWT. Limites proposées : 20 messages/minute/session
     visiteur, 60 messages/minute/candidat authentifié, 5 créations de sessions visiteur/heure/IP. Session visiteur
     : 30 minutes d''inactivité, durée maximale absolue de 24 heures. Profil candidat recommandé : identité et coordonnées,
     parcours scolaire, établissement actuel, année d''obtention, résultats facultatifs, intérêts, matières préférées,
@@ -24,6 +24,7 @@ security:
 paths:
   /auth/register:
     post:
+      x-implementation-status: implemented
       tags: [Authentification comptes]
       summary: Créer un compte candidat
       description: Le rôle est fixé à candidate par le serveur. Un compte existant sans mot de passe ne peut pas être revendiqué ici.
@@ -44,6 +45,7 @@ paths:
         '429': {$ref: '#/components/responses/TooManyRequests'}
   /auth/login:
     post:
+      x-implementation-status: implemented
       tags: [Authentification comptes]
       summary: Connecter un candidat ou un responsable
       security: []
@@ -62,6 +64,7 @@ paths:
         '429': {$ref: '#/components/responses/TooManyRequests'}
   /auth/refresh:
     post:
+      x-implementation-status: implemented
       tags: [Authentification comptes]
       summary: Renouveler les identifiants de compte
       description: Utilise le cookie de refresh de compte et exige une origine autorisée. Le jeton est rotatif.
@@ -76,6 +79,7 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
   /auth/logout:
     post:
+      x-implementation-status: implemented
       tags: [Authentification comptes]
       summary: Révoquer la session de compte
       description: Révoque la session identifiée par le cookie ou un jeton d'accès valide et efface le cookie.
@@ -85,6 +89,7 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
   /auth/me:
     get:
+      x-implementation-status: implemented
       tags: [Authentification comptes]
       summary: Consulter le compte et le rôle effectif
       responses:
@@ -96,6 +101,7 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
   /auth/activate:
     post:
+      x-implementation-status: implemented
       tags: [Authentification comptes]
       summary: Définir le premier mot de passe avec une invitation
       security: []
@@ -109,6 +115,7 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
   /admin/users:
     get:
+      x-implementation-status: implemented
       tags: [Administration utilisateurs]
       summary: Lister les comptes (administrateur)
       parameters:
@@ -126,6 +133,7 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
     post:
+      x-implementation-status: implemented
       tags: [Administration utilisateurs]
       summary: Créer un compte responsable en attente d'activation
       requestBody:
@@ -144,8 +152,10 @@ paths:
         '409': {$ref: '#/components/responses/Conflict'}
   /admin/users/{user_id}:
     patch:
+      x-implementation-status: implemented
       tags: [Administration utilisateurs]
-      summary: Changer rôle, institution ou statut d'un compte
+      summary: Changer le rôle professionnel ou le statut d'un compte
+      description: Administrateur uniquement. Les changements effectifs révoquent les sessions et invitations inutilisées. institution_id reste compatible avec null ; une valeur non nulle est refusée.
       parameters:
       - {in: path, name: user_id, required: true, schema: {type: integer, format: int64}}
       requestBody:
@@ -155,7 +165,7 @@ paths:
             schema: {$ref: '#/components/schemas/AccountUpdateRequest'}
       responses:
         '200':
-          description: Compte mis à jour ; changement audité et sessions révoquées.
+          description: Compte mis à jour ; changement audité, sessions et invitations inutilisées révoquées.
           content:
             application/json:
               schema: {$ref: '#/components/schemas/Account'}
@@ -165,6 +175,7 @@ paths:
         '409': {$ref: '#/components/responses/Conflict'}
   /admin/users/{user_id}/invitations:
     post:
+      x-implementation-status: implemented
       tags: [Administration utilisateurs]
       summary: Émettre une invitation à usage unique
       description: Le jeton n'est retourné qu'une fois à l'administrateur, pour remise manuelle.
@@ -182,6 +193,7 @@ paths:
         '409': {$ref: '#/components/responses/Conflict'}
   /visitor-sessions:
     post:
+      x-implementation-status: implemented
       tags:
       - Sessions visiteurs
       summary: Créer une session temporaire de visiteur
@@ -218,6 +230,7 @@ paths:
         24 heures après sa création. Limite : 5 créations par heure et par adresse IP.'
   /visitor-sessions/{session_id}:
     get:
+      x-implementation-status: implemented
       security: [{visitorBearer: []}]
       tags:
       - Sessions visiteurs
@@ -244,6 +257,7 @@ paths:
       description: Accessible uniquement avec le jeton de session visiteur correspondant.
   /candidates/me:
     get:
+      x-implementation-status: implemented
       tags:
       - Candidats
       summary: Consulter le profil du candidat connecté
@@ -261,6 +275,7 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
     patch:
+      x-implementation-status: future
       tags:
       - Candidats
       summary: Mettre à jour son profil candidat
@@ -290,6 +305,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /candidates/me/applications:
     get:
+      x-implementation-status: implemented
       tags: [Candidats]
       summary: Consulter les statuts de ses candidatures
       responses:
@@ -308,9 +324,11 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
   /candidates/{candidate_id}:
     get:
+      x-implementation-status: implemented
       tags:
       - Candidats
       summary: Consulter un dossier candidat
+      description: Profil en lecture seule. Le candidat consulte son propre profil, admin accède aux profils IIT et ISB, interviewer exige une candidature interview_scheduled. Aucun historique conversationnel privé, résultat QCM ou secret d’authentification n’est exposé.
       parameters:
       - $ref: '#/components/parameters/CandidateId'
       responses:
@@ -330,6 +348,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /conversations:
     post:
+      x-implementation-status: implemented
       security: [{visitorBearer: []}]
       tags:
       - Conversations
@@ -364,6 +383,7 @@ paths:
           $ref: '#/components/responses/ValidationError'
   /conversations/{conversation_id}:
     get:
+      x-implementation-status: implemented
       security: [{visitorBearer: []}]
       tags:
       - Conversations
@@ -392,6 +412,7 @@ paths:
       description: SA-26 does not implement automatic conversation deletion or anonymization.
   /conversations/{conversation_id}/messages:
     post:
+      x-implementation-status: implemented
       security: [{visitorBearer: []}]
       tags:
       - Conversations
@@ -432,6 +453,7 @@ paths:
           $ref: '#/components/responses/ValidationError'
   /visitor-sessions/{session_id}/link:
     post:
+      x-implementation-status: implemented
       security: [{accountBearer: []}]
       tags:
       - Conversations
@@ -482,6 +504,7 @@ paths:
           $ref: '#/components/responses/ValidationError'
   /candidates/me/conversations:
     get:
+      x-implementation-status: implemented
       security: [{accountBearer: []}]
       tags: [Candidats]
       summary: Lister les conversations transférées au candidat authentifié
@@ -509,6 +532,7 @@ paths:
         '403': {$ref: '#/components/responses/Forbidden'}
   /candidates/me/conversations/{conversation_id}:
     get:
+      x-implementation-status: implemented
       security: [{accountBearer: []}]
       tags: [Candidats]
       summary: Lire une conversation transférée et son historique
@@ -525,6 +549,7 @@ paths:
         '404': {$ref: '#/components/responses/NotFound'}
   /candidates/me/conversations/{conversation_id}/messages:
     post:
+      x-implementation-status: implemented
       security: [{accountBearer: []}]
       tags: [Candidats]
       summary: Continuer une conversation transférée par message texte
@@ -546,6 +571,7 @@ paths:
         '404': {$ref: '#/components/responses/NotFound'}
   /documents:
     get:
+      x-implementation-status: future
       tags:
       - Documents
       summary: Lister les documents accessibles
@@ -583,6 +609,7 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
     post:
+      x-implementation-status: future
       tags:
       - Documents
       summary: Déposer un document dans un dossier candidat
@@ -643,6 +670,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /documents/{document_id}:
     get:
+      x-implementation-status: future
       tags:
       - Documents
       summary: Consulter les métadonnées d'un document
@@ -666,6 +694,7 @@ paths:
       description: Les documents de candidature sont conservés jusqu'à la fin du cycle d'admission, puis 12 mois
         au maximum, avant suppression ou anonymisation, sauf obligation légale ou institutionnelle différente.
     delete:
+      x-implementation-status: future
       tags:
       - Documents
       summary: Supprimer un document
@@ -685,6 +714,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /conversations/{conversation_id}/audio:
     post:
+      x-implementation-status: future
       security: [{visitorBearer: []}]
       tags:
       - Conversations
@@ -750,6 +780,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /visitor-sessions/{session_id}/refresh:
     post:
+      x-implementation-status: implemented
       security: []
       tags:
       - Sessions visiteurs
@@ -837,7 +868,7 @@ components:
         id: {type: integer, format: int64}
         email: {type: string, format: email}
         full_name: {type: string}
-        role: {type: string, enum: [candidate, academic_staff, interviewer, direction, admin]}
+        role: {type: string, enum: [candidate, interviewer, admin]}
         institution_id: {type: integer, format: int64, nullable: true}
         is_active: {type: boolean}
     AuthResult:
@@ -877,14 +908,14 @@ components:
       properties:
         email: {type: string, format: email}
         full_name: {type: string, minLength: 1, maxLength: 200}
-        role: {type: string, enum: [academic_staff, interviewer, direction, admin]}
-        institution_id: {type: integer, format: int64, nullable: true}
+        role: {type: string, enum: [interviewer, admin]}
+        institution_id: {type: integer, format: int64, nullable: true, description: "Compatibilité uniquement : omis ou null ; valeur non nulle refusée (422)."}
     AccountUpdateRequest:
       type: object
       additionalProperties: false
       properties:
-        role: {type: string, enum: [academic_staff, interviewer, direction, admin]}
-        institution_id: {type: integer, format: int64, nullable: true}
+        role: {type: string, enum: [interviewer, admin]}
+        institution_id: {type: integer, format: int64, nullable: true, description: "Compatibilité uniquement : omis ou null ; valeur non nulle refusée (422)."}
         is_active: {type: boolean}
     Invitation:
       type: object
@@ -972,7 +1003,7 @@ components:
         career_goal: {type: string, nullable: true}
         constraints: {type: string, nullable: true}
         preferred_language: {type: string, enum: [fr, tn, arabizi, ar, en]}
-      description: Profil de candidate_profile et app_user existants. L'identifiant est un BIGINT.
+      description: Profil en lecture seule de candidate_profile et app_user existants. L'identifiant est un BIGINT.
     CandidateProfileUpdate:
       type: object
       properties:

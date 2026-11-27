@@ -3,8 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-UserRole = Literal["candidate", "academic_staff", "interviewer", "direction", "admin"]
-StaffRole = Literal["academic_staff", "interviewer", "direction", "admin"]
+UserRole = Literal["candidate", "interviewer", "admin"]
+StaffRole = Literal["interviewer", "admin"]
 
 
 class AccountPublic(BaseModel):

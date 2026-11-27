@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from pathlib import Path
 from uuid import UUID
 
 import pytest
@@ -42,6 +43,7 @@ class FakeConnection:
         self.invitations: dict[UUID, dict[str, Any]] = {}
         self.attempts: list[dict[str, Any]] = []
         self.audit: list[tuple] = []
+        self.interview_candidates: set[int] = set()
         self.next_user_id = 1
 
     def user(self, email: str, role: str, password: str | None, institution_id: int | None = None):
@@ -174,9 +176,7 @@ class FakeConnection:
             user = self.users.get(candidate_id)
             if not user or user["role"] != "candidate" or candidate_id not in self.profiles:
                 return Cursor()
-            if "from recommendation" in q and params[1:] != (1, 1):
-                return Cursor()
-            if "interview_scheduled" in q and candidate_id != 20:
+            if "interview_scheduled" in q and candidate_id not in self.interview_candidates:
                 return Cursor()
             return Cursor({**user, **dict.fromkeys(("phone", "birth_year", "city", "nationality",
                 "current_level", "bac_section", "bac_year", "bac_average", "last_diploma",
@@ -281,7 +281,7 @@ def test_registration_cannot_choose_staff_role_and_login_failures_are_generic(ap
 def test_admin_invitation_activation_and_role_change_revoke_sessions(api) -> None:
     client, database, settings = api
     admin = database.user("admin@example.com", "admin", "a long admin password")
-    pending = database.user("staff@example.com", "academic_staff", None, 1)
+    pending = database.user("staff@example.com", "interviewer", None)
     pending["is_active"] = False
     admin_login = client.post("/api/v1/auth/login", json={"email": admin["email"], "password": "a long admin password"})
     admin_token = admin_login.json()["access_token"]
@@ -302,11 +302,12 @@ def test_admin_invitation_activation_and_role_change_revoke_sessions(api) -> Non
     assert staff_login.status_code == 200
     staff_token = staff_login.json()["access_token"]
     assert client.get("/api/v1/admin/users", headers=_headers(staff_token)).status_code == 403
-    changed = client.patch(f"/api/v1/admin/users/{pending['id']}", json={"role": "interviewer"}, headers=_headers(admin_token))
+    changed = client.patch(f"/api/v1/admin/users/{pending['id']}", json={"role": "admin"}, headers=_headers(admin_token))
     assert changed.status_code == 200
-    assert changed.json()["role"] == "interviewer"
+    assert changed.json()["role"] == "admin"
     assert database.audit and database.audit[-1][0] == admin["id"]
     assert client.get("/api/v1/auth/me", headers=_headers(staff_token)).status_code == 401
+    accounts.update_user(database, actor_id=admin["id"], target_id=pending["id"], fields={"role": "interviewer"})
     with pytest.raises(AppError) as exc:
         accounts.update_user(database, actor_id=admin["id"], target_id=admin["id"], fields={"is_active": False})
     assert exc.value.code == "LAST_ADMIN_REQUIRED"
@@ -316,8 +317,8 @@ def test_admin_invitation_activation_and_role_change_revoke_sessions(api) -> Non
 def test_candidate_resource_and_origin_guards(api) -> None:
     client, database, settings = api
     candidate = database.user("candidate@example.com", "candidate", "a long candidate password")
-    staff = database.user("staff@example.com", "academic_staff", "a long staff password", 1)
-    other_staff = database.user("other@example.com", "academic_staff", "a long staff password", 2)
+    staff = database.user("staff@example.com", "admin", "a long staff password")
+    other_staff = database.user("other@example.com", "interviewer", "a long staff password")
     candidate_login = client.post("/api/v1/auth/login", json={"email": candidate["email"], "password": "a long candidate password"}).json()
     token = candidate_login["access_token"]
     assert client.get("/api/v1/candidates/me", headers=_headers(token)).status_code == 200
@@ -341,3 +342,113 @@ def test_generated_openapi_exposes_account_contract(api) -> None:
     assert "/api/v1/auth/register" in schema["paths"]
     assert "/api/v1/admin/users/{user_id}/invitations" in schema["paths"]
     assert "role" not in schema["components"]["schemas"]["RegisterRequest"]["properties"]
+    schemas = schema["components"]["schemas"]
+    assert schemas["AccountPublic"]["properties"]["role"]["enum"] == ["candidate", "interviewer", "admin"]
+    assert schemas["StaffCreateRequest"]["properties"]["role"]["enum"] == ["interviewer", "admin"]
+
+
+def test_documented_role_contract_and_implementation_status_match_the_api(api) -> None:
+    import yaml
+    client, _, _ = api
+    actual = client.get("/openapi.json").json()
+    documented = yaml.safe_load((Path(__file__).resolve().parents[2] / "docs/SA-5_OpenAPI.yaml").read_text(encoding="utf-8"))
+    for documented_name, actual_name in [("Account", "AccountPublic"), ("StaffCreateRequest", "StaffCreateRequest")]:
+        assert documented["components"]["schemas"][documented_name]["properties"]["role"]["enum"] == actual["components"]["schemas"][actual_name]["properties"]["role"]["enum"]
+    for path, operations in documented["paths"].items():
+        for method, operation in operations.items():
+            if method not in ("get", "post", "patch", "delete"):
+                continue
+            implemented = method in actual["paths"].get("/api/v1" + path, {})
+            assert operation["x-implementation-status"] == ("implemented" if implemented else "future")
+
+
+def _login(client, user):
+    return client.post("/api/v1/auth/login", json={"email": user["email"], "password": "a long test password"}).json()["access_token"]
+
+
+def test_dossier_roles_stage_restriction_and_public_fields(api) -> None:
+    client, database, _ = api
+    admin = database.user("admin@example.com", "admin", "a long test password")
+    interviewer = database.user("interview@example.com", "interviewer", "a long test password")
+    first = database.user("iit@example.com", "candidate", "a long test password")
+    second = database.user("isb@example.com", "candidate", "a long test password")
+    admin_token, interviewer_token = _login(client, admin), _login(client, interviewer)
+    for candidate in (first, second):
+        response = client.get(f"/api/v1/candidates/{candidate['id']}", headers=_headers(admin_token))
+        assert response.status_code == 200
+        assert not {"password_hash", "refresh_token_hash", "messages", "conversations", "recommendations"} & response.json().keys()
+        assert client.get(f"/api/v1/candidates/{candidate['id']}", headers=_headers(interviewer_token)).status_code == 404
+    database.interview_candidates.add(second["id"])
+    assert client.get(f"/api/v1/candidates/{second['id']}", headers=_headers(interviewer_token)).status_code == 200
+    assert client.get("/api/v1/candidates/999", headers=_headers(admin_token)).status_code == 404
+    assert client.get(f"/api/v1/candidates/{first['id']}").status_code == 401
+    candidate_token = _login(client, first)
+    assert client.get(f"/api/v1/candidates/{first['id']}", headers=_headers(candidate_token)).status_code == 200
+    assert client.get(f"/api/v1/candidates/{second['id']}", headers=_headers(candidate_token)).status_code == 403
+
+
+@pytest.mark.parametrize("role", ["admin", "interviewer"])
+def test_professional_accounts_cannot_read_private_candidate_conversations(api, role) -> None:
+    client, database, _ = api
+    user = database.user("staff@example.com", role, "a long test password")
+    headers = _headers(_login(client, user))
+    assert client.get("/api/v1/candidates/me/conversations", headers=headers).status_code == 403
+    conversation_id = UUID(int=123)
+    assert client.get(f"/api/v1/candidates/me/conversations/{conversation_id}", headers=headers).status_code == 403
+    assert client.post(f"/api/v1/visitor-sessions/{UUID(int=456)}/link", json={"consent": True}, headers={**headers, "X-Visitor-Session-Token": "not-an-owner-token"}).status_code == 403
+
+
+@pytest.mark.parametrize("role", ["academic_staff", "direction"])
+def test_obsolete_roles_cannot_be_provisioned_or_assigned(api, role) -> None:
+    client, database, _ = api
+    admin = database.user("admin@example.com", "admin", "a long test password")
+    staff = database.user("staff@example.com", "interviewer", None)
+    headers = _headers(_login(client, admin))
+    assert client.post("/api/v1/admin/users", json={"email": "new@example.com", "full_name": "New", "role": role}, headers=headers).status_code == 422
+    assert client.patch(f"/api/v1/admin/users/{staff['id']}", json={"role": role}, headers=headers).status_code == 422
+    assert staff["role"] == "interviewer" and len(database.users) == 2
+
+
+def test_staff_provisioning_institution_and_admin_boundaries(api) -> None:
+    client, database, _ = api
+    admin = database.user("admin@example.com", "admin", "a long test password")
+    interviewer = database.user("staff@example.com", "interviewer", "a long test password")
+    candidate = database.user("candidate@example.com", "candidate", None)
+    headers = _headers(_login(client, admin))
+    for role in ("interviewer", "admin"):
+        body = {"email": f"new-{role}@example.com", "full_name": "New", "role": role}
+        assert client.post("/api/v1/admin/users", json={**body, "institution_id": 1}, headers=headers).status_code == 422
+        response = client.post("/api/v1/admin/users", json=body, headers=headers)
+        assert response.status_code == 201
+        assert response.json()["institution_id"] is None and not response.json()["is_active"]
+    assert client.patch(f"/api/v1/admin/users/{interviewer['id']}", json={"institution_id": 1}, headers=headers).status_code == 422
+    assert client.patch(f"/api/v1/admin/users/{candidate['id']}", json={"role": "admin"}, headers=headers).status_code == 409
+    staff_headers = _headers(_login(client, interviewer))
+    for method, path, body in [
+        ("get", "/api/v1/admin/users", None),
+        ("post", "/api/v1/admin/users", {"email": "x@example.com", "full_name": "X", "role": "admin"}),
+        ("patch", f"/api/v1/admin/users/{admin['id']}", {"is_active": False}),
+        ("post", f"/api/v1/admin/users/{admin['id']}/invitations", None),
+    ]:
+        kwargs = {"headers": staff_headers}
+        if body is not None:
+            kwargs["json"] = body
+        assert getattr(client, method)(path, **kwargs).status_code == 403
+
+
+def test_access_changes_invalidate_unused_invitations_but_noop_preserves_them(api) -> None:
+    client, database, _ = api
+    admin = database.user("admin@example.com", "admin", "a long test password")
+    pending = database.user("pending@example.com", "interviewer", None)
+    pending["is_active"] = False
+    headers = _headers(_login(client, admin))
+    path = f"/api/v1/admin/users/{pending['id']}"
+    token = client.post(f"{path}/invitations", headers=headers).json()["invitation_token"]
+    assert client.patch(path, json={"role": "interviewer", "institution_id": None, "is_active": False}, headers=headers).status_code == 200
+    assert all(i["revoked_at"] is None for i in database.invitations.values())
+    assert client.patch(path, json={"role": "admin"}, headers=headers).status_code == 200
+    assert all(i["revoked_at"] is not None for i in database.invitations.values())
+    assert client.post("/api/v1/auth/activate", json={"invitation_token": token, "password": "a long test password"}).status_code == 401
+    fresh = client.post(f"{path}/invitations", headers=headers).json()["invitation_token"]
+    assert client.post("/api/v1/auth/activate", json={"invitation_token": fresh, "password": "a long test password"}).status_code == 204
+    assert pending["role"] == "admin" and pending["is_active"]

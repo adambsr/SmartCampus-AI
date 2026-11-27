@@ -282,10 +282,12 @@ def create_staff(
     conn: Connection, *, email: str, full_name: str, role: str,
     institution_id: int | None,
 ) -> dict[str, Any]:
-    if (role == "academic_staff") != (institution_id is not None):
+    if role not in ("interviewer", "admin"):
+        raise AppError(code="INVALID_STAFF_ROLE", message="A supported staff role is required.", status_code=422)
+    if institution_id is not None:
         raise AppError(
             code="INVALID_STAFF_INSTITUTION",
-            message="Academic staff require an institution; other staff must not have one.",
+            message="Staff accounts do not use institution assignments.",
             status_code=422,
         )
     try:
@@ -326,12 +328,11 @@ def update_user(
             role = fields.get("role", row["role"])
             active = fields.get("is_active", row["is_active"])
             institution_id = fields.get("institution_id", row["institution_id"])
-            if role != "academic_staff":
-                if "institution_id" in fields and institution_id is not None:
-                    raise AppError(code="INVALID_STAFF_INSTITUTION", message="Only academic staff may have an institution.", status_code=422)
-                institution_id = None
-            elif institution_id is None:
-                raise AppError(code="INVALID_STAFF_INSTITUTION", message="Academic staff require an institution.", status_code=422)
+            if "role" in fields and role not in ("interviewer", "admin"):
+                raise AppError(code="INVALID_STAFF_ROLE", message="A supported staff role is required.", status_code=422)
+            if "institution_id" in fields and institution_id is not None:
+                raise AppError(code="INVALID_STAFF_INSTITUTION", message="Staff accounts do not use institution assignments.", status_code=422)
+            institution_id = None
             changed = (role, institution_id, active) != (row["role"], row["institution_id"], row["is_active"])
             if not changed:
                 return _public(row)
@@ -360,6 +361,11 @@ def update_user(
             conn.execute(
                 """UPDATE account_session SET revoked_at = %s
                    WHERE user_id = %s AND revoked_at IS NULL""",
+                (at, target_id),
+            )
+            conn.execute(
+                """UPDATE account_invitation SET revoked_at = %s
+                   WHERE user_id = %s AND used_at IS NULL AND revoked_at IS NULL""",
                 (at, target_id),
             )
             return _public(updated)
@@ -405,13 +411,8 @@ def get_candidate_profile(
         if candidate_id != actor["id"]:
             raise AppError(code="FORBIDDEN", message="This candidate profile is not accessible.", status_code=403)
         scope_sql, params = "", ()
-    elif role == "academic_staff":
-        scope_sql = """AND (
-            EXISTS (SELECT 1 FROM application a JOIN program p ON p.id = a.program_id
-                    WHERE a.user_id = u.id AND p.institution_id = %s)
-            OR EXISTS (SELECT 1 FROM recommendation r JOIN program p ON p.id = r.program_id
-                       WHERE r.user_id = u.id AND p.institution_id = %s))"""
-        params = (actor["institution_id"], actor["institution_id"])
+    elif role == "admin":
+        scope_sql, params = "", ()
     elif role == "interviewer":
         scope_sql = """AND EXISTS (
             SELECT 1 FROM application a WHERE a.user_id = u.id

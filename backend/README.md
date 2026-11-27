@@ -104,8 +104,8 @@ The backend uses:
 Both dependencies are declared in `pyproject.toml` and locked in `uv.lock`.
 
 Database schema and demo data are managed in the repository's `database/`
-directory. The configured Neon database was at migration
-`0007_guest_account_link` when checked on 2026-11-27. The SA-18
+directory. Default Neon is at migration
+`0008_simplify_roles` (repository head), confirmed by authorized read-only verification on 2026-11-27. The SA-18
 seeder truncates application tables and requires `--confirm-reset`; never run it
 against the default Neon database or records you need to preserve.
 
@@ -159,3 +159,9 @@ the candidate can read and continue the same conversation IDs and messages after
 the visitor session expires. Migration `0007_guest_account_link` was confirmed
 applied to the configured Neon database on 2026-11-27. See
 `../docs/sa29-guest-account-link.md`.
+
+## Professor actor simplification 2026 11 27
+
+The active roles are candidate, interviewer and admin; Visiteur remains anonymous. Responsable entretiens et rendez-vous and Administrateur are independent actors. Admins can read candidate profiles across IIT/ISB; interviewer reads still require an interview_scheduled application. Private candidate conversations stay candidate-owned. Staff provisioning offers interviewer/admin only, without institution assignment.
+
+Default Neon has 0008_simplify_roles applied after 0007_guest_account_link, confirmed by read-only verification on 2026-11-27. Other environments require their own approved migration application. It disables former academic_staff/direction accounts as interviewers for explicit admin review, preserves account IDs/history and revokes their sessions and unused invitations. Never promote accounts automatically or run the seeder to migrate data. See [SA-17](../docs/sa17-migrations.md) for the approval, recovery and coordinated rollout procedure. Future UML modules are not implemented by this refactor.

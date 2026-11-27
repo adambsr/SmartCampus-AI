@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="780" viewBox="0 0 1100 780">
+<rect width="1100" height="780" fill="white"/>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#50617c"/></marker></defs>
+<text x="550" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#131b2e">Architecture actuelle et composants cibles</text>
+<rect x="35" y="65" width="440" height="75" rx="9" fill="#edf3ff" stroke="#29528b" />
+<text x="255.0" y="97.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Visiteur anonyme / Candidat</text>
+<text x="255.0" y="122.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Sessions et données propriétaires</text>
+<rect x="625" y="65" width="440" height="75" rx="9" fill="#edf3ff" stroke="#29528b" />
+<text x="845.0" y="97.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Responsable entretiens et rendez-vous / Admin</text>
+<text x="845.0" y="122.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Acteurs professionnels indépendants</text>
+<rect x="355" y="185" width="390" height="65" rx="9" fill="#edf3ff" stroke="#29528b" />
+<text x="550.0" y="224.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Frontend React / Vite</text>
+<rect x="355" y="295" width="390" height="80" rx="9" fill="#edf3ff" stroke="#29528b" />
+<text x="550.0" y="329.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Backend FastAPI</text>
+<text x="550.0" y="354.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Authentification et autorisations</text>
+<rect x="25" y="430" width="310" height="110" rx="9" fill="#edf3ff" stroke="#29528b" />
+<text x="180.0" y="467.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Services actuels</text>
+<text x="180.0" y="492.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Catalogue, profils et comptes</text>
+<text x="180.0" y="517.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Conversations, transfert consenti</text>
+<rect x="385" y="430" width="330" height="110" rx="9" fill="#edf3ff" stroke="#29528b" />
+<text x="550.0" y="467.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">PostgreSQL</text>
+<text x="550.0" y="492.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Comptes, catalogue, candidatures</text>
+<text x="550.0" y="517.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Conversations et historiques</text>
+<rect x="765" y="430" width="310" height="110" rx="9" fill="#f7f7f7" stroke="#29528b" stroke-dasharray="7 5"/>
+<text x="920.0" y="467.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Orchestration LangGraph cible</text>
+<text x="920.0" y="492.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">LLM et RAG</text>
+<text x="920.0" y="517.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">IA et mémoire conversationnelle</text>
+<rect x="25" y="605" width="310" height="100" rx="9" fill="#f7f7f7" stroke="#29528b" stroke-dasharray="7 5"/>
+<text x="180.0" y="637.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Services métier cibles</text>
+<text x="180.0" y="662.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">QCM, rendez-vous et entretiens</text>
+<text x="180.0" y="687.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Statistiques et configuration</text>
+<rect x="385" y="605" width="330" height="100" rx="9" fill="#f7f7f7" stroke="#29528b" stroke-dasharray="7 5"/>
+<text x="550.0" y="637.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Intégrations cibles</text>
+<text x="550.0" y="662.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Whisper et stockage de fichiers</text>
+<text x="550.0" y="687.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Notifications email et calendrier</text>
+<rect x="765" y="605" width="310" height="100" rx="9" fill="#f7f7f7" stroke="#29528b" stroke-dasharray="7 5"/>
+<text x="920.0" y="637.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Corpus documentaire cible</text>
+<text x="920.0" y="662.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Sources officielles IIT / ISB</text>
+<text x="920.0" y="687.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#131b2e">Index RAG</text>
+<path d="M255 140V168H460V185" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" />
+<path d="M845 140V168H640V185" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" />
+<path d="M550 250V295" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" />
+<path d="M440 375V402H180V430" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" />
+<path d="M550 375V430" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" />
+<path d="M660 375V402H920V430" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
+<path d="M355 335H10V580H180V605" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
+<path d="M550 540V605" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
+<path d="M920 540V605" fill="none" stroke="#50617c" stroke-width="1.6" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
+<text x="550" y="750" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#131b2e">Trait plein : composants actuels. Pointillé : périmètre cible non ajouté par ce refactoring.</text>
+</svg>

@@ -8,7 +8,7 @@ These 12 self-contained prompts are the approved design batch. Use synthetic nam
 
 ## 2. Staff refinement
 
-> Refine the existing SmartCampus AI staff dashboard reference, preserving its white 282 px sidebar, cool lavender canvas, blue/teal accents and Georgia staff headings. Show the signed-in role, useful role-specific navigation, logout, and a compact numeric dossier lookup for academic staff/interviewers. Direction has no aggregate reports yet; admin has account management. Remove fake metrics, placeholder module cards and actions, global language selector, notification bell, health diagnostic and role badges unrelated to the current user. Use readable 16 px body, 14 px navigation, 44 px controls. Show
+> Refine the existing SmartCampus AI staff dashboard reference, preserving its white 282 px sidebar, cool lavender canvas, blue/teal accents and Georgia staff headings. Show the signed-in role, useful role-specific navigation, logout, and a compact numeric dossier lookup for interviewers/admins. Admins may read profiles across IIT/ISB and have account management; interviewers require an interview_scheduled application. Use the labels Responsable entretiens et rendez-vous and Administrateur; no actor inheritance or institution assignment. Remove fake metrics, placeholder module cards and actions, global language selector, notification bell, health diagnostic and role badges unrelated to the current user. Use readable 16 px body, 14 px navigation, 44 px controls. Show
 
 ## 3. Login
 
@@ -40,12 +40,14 @@ These 12 self-contained prompts are the approved design batch. Use synthetic nam
 
 ## 10. Staff dossier
 
-> Design a French read-only SmartCampus AI staff dossier screen using the existing staff sidebar, cool lavender canvas, deep blue/teal accents, Georgia staff headings and Inter body. Academic staff or interviewers arrive through a numeric ID lookup and see only profile fields returned by the scoped dossier API. Show loading, denied and not-found states without revealing another candidate’s data. No candidate list, editing, recommendation, interview or document controls. Use entirely synthetic candidate information;
+> Design a French read-only SmartCampus AI staff dossier screen using the existing staff sidebar, cool lavender canvas, deep blue/teal accents, Georgia staff headings and Inter body. Interviewers or admins arrive through a numeric ID lookup and see only profile fields returned by the authorized dossier API. Admin spans IIT/ISB; interviewer requires interview_scheduled. No private conversation history. Show loading, denied and not-found states without revealing another candidate’s data. No candidate list, editing, recommendation, interview or document controls. Use entirely synthetic candidate information;
 
 ## 11. Admin users
 
-> Design a French SmartCampus AI admin account-management screen with the established staff shell, lavender-white/blue/teal palette, Georgia headings and Inter body. Show paginated account rows and actions to create pending staff, change allowed staff role/institution/status, and issue a one-time invitation. Include empty/loading/error and conflict states. Never allow converting a candidate to staff or imply invitation email delivery. Use synthetic users and a masked example token.
+> Design a French SmartCampus AI admin account-management screen with the established staff shell, lavender-white/blue/teal palette, Georgia headings and Inter body. Show paginated account rows and actions to create pending staff, change interviewer/admin role and active status, and issue a one-time invitation. Include empty/loading/error and conflict states. Never allow converting a candidate to staff or imply invitation email delivery. Use synthetic users and a masked example token.
 
 ## 12. Dialogs and interaction states
 
-> Design coordinated SmartCampus AI dialogs in `#faf8ff`, `#00288e`, `#006a61`, white surfaces and readable Inter: candidate session-wide conversation-transfer consent with unchecked checkbox and ‘not now’; admin pending-staff creation; role/institution/status change; one-time invitation token display with expiry and copy action; generic destructive-change confirmation. Show pending, success and recoverable failure variants, keyboard focus and 44 px actions. Use fake data only. Do not add new backend behavior.
+> Design coordinated SmartCampus AI dialogs in `#faf8ff`, `#00288e`, `#006a61`, white surfaces and readable Inter: candidate session-wide conversation-transfer consent with unchecked checkbox and ‘not now’; admin pending-staff creation; interviewer/admin role and active-status change; one-time invitation token display with expiry and copy action; generic destructive-change confirmation. Show pending, success and recoverable failure variants, keyboard focus and 44 px actions. Use fake data only. Do not add new backend behavior.
+
+These prompts describe the existing approved visual identity. The professor decision of 2026-11-27 supersedes actor wording in original Stitch references; this authorization refactor requires no redesign or new screens.

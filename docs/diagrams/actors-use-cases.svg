@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+<rect width="1400" height="900" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#131b2e} .case{fill:#f7f9fc;stroke:#29528b;stroke-width:1.5}.link{stroke:#50617c;fill:none;stroke-width:1.4}</style>
+<rect x="252" y="50" width="1127" height="790" fill="none" stroke="#29528b" stroke-width="2"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="816" y="32" text-anchor="middle" font-size="25" font-weight="bold">SmartCampus AI</text>
+<g data-actor="Visiteur">
+<circle cx="116" cy="114" r="16" fill="white" stroke="#29528b" stroke-width="2"/>
+<path d="M116 130v44m-33-28h66m-33 28l-28 30m28-30l28 30" stroke="#29528b" stroke-width="2" fill="none"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="116" y="231" text-anchor="middle" font-size="20" font-weight="bold">Visiteur</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 146H240V65H438V78"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="438" cy="145" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="140" text-anchor="middle" font-size="19">Démarrer une conversation</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="164" text-anchor="middle" font-size="19">sans compte</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 146H240V65H803V78"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="803" cy="145" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="140" text-anchor="middle" font-size="19">Poser des questions sur les</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="164" text-anchor="middle" font-size="19">formations et parcours IIT / ISB</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 146H240V65H1168V78"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="1168" cy="145" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="140" text-anchor="middle" font-size="19">Découvrir le catalogue</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="164" text-anchor="middle" font-size="19">des formations</text>
+</g>
+<g data-actor="Candidat">
+<circle cx="116" cy="304" r="16" fill="white" stroke="#29528b" stroke-width="2"/>
+<path d="M116 320v44m-33-28h66m-33 28l-28 30m28-30l28 30" stroke="#29528b" stroke-width="2" fill="none"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="116" y="421" text-anchor="middle" font-size="20" font-weight="bold">Candidat</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 336H240V255H438V268"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="438" cy="335" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="330" text-anchor="middle" font-size="19">S’authentifier et poursuivre</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="354" text-anchor="middle" font-size="19">ses conversations</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 336H240V255H803V268"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="803" cy="335" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="330" text-anchor="middle" font-size="19">Construire son profil et comparer</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="354" text-anchor="middle" font-size="19">les orientations recommandées</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 336H240V255H1168V268"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="1168" cy="335" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="330" text-anchor="middle" font-size="19">Préinscription, QCM, équivalence,</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="354" text-anchor="middle" font-size="19">rendez-vous, notifications et suivi</text>
+</g>
+<g data-actor="Responsable entretiens et rendez-vous">
+<circle cx="116" cy="494" r="16" fill="white" stroke="#29528b" stroke-width="2"/>
+<path d="M116 510v44m-33-28h66m-33 28l-28 30m28-30l28 30" stroke="#29528b" stroke-width="2" fill="none"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="116" y="611" text-anchor="middle" font-size="20" font-weight="bold">Responsable entretiens</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="116" y="634" text-anchor="middle" font-size="20" font-weight="bold">et rendez-vous</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 526H240V445H438V458"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="438" cy="525" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="520" text-anchor="middle" font-size="19">Consulter les candidats prêts,</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="544" text-anchor="middle" font-size="19">profils, résumés et résultats QCM</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 526H240V445H803V458"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="803" cy="525" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="520" text-anchor="middle" font-size="19">Préparer et réaliser les entretiens ;</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="544" text-anchor="middle" font-size="19">enregistrer résultats et observations</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 526H240V445H1168V458"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="1168" cy="525" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="520" text-anchor="middle" font-size="19">Définir ou valider les rendez-vous ;</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="544" text-anchor="middle" font-size="19">envoyer les invitations</text>
+</g>
+<g data-actor="Administrateur">
+<circle cx="116" cy="684" r="16" fill="white" stroke="#29528b" stroke-width="2"/>
+<path d="M116 700v44m-33-28h66m-33 28l-28 30m28-30l28 30" stroke="#29528b" stroke-width="2" fill="none"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="116" y="801" text-anchor="middle" font-size="20" font-weight="bold">Administrateur</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 716H240V635H438V648"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="438" cy="715" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="710" text-anchor="middle" font-size="19">Gérer comptes, rôles et formations ;</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="438" y="734" text-anchor="middle" font-size="19">administrer les sources RAG</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 716H240V635H803V648"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="803" cy="715" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="698" text-anchor="middle" font-size="19">Configurer orientation, QCM et</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="722" text-anchor="middle" font-size="19">notifications ; vérifier, confirmer</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="803" y="746" text-anchor="middle" font-size="19">ou ajuster les recommandations</text>
+<path fill="none" stroke="#50617c" stroke-width="1.4" d="M150 716H240V635H1168V648"/>
+<ellipse fill="#f7f9fc" stroke="#29528b" stroke-width="1.5" cx="1168" cy="715" rx="170" ry="67"/>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="698" text-anchor="middle" font-size="19">Consulter dossiers, profils, QCM ;</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="722" text-anchor="middle" font-size="19">superviser agents et journaux ;</text>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="1168" y="746" text-anchor="middle" font-size="19">consulter tableau de bord/statistiques</text>
+</g>
+<text font-family="Arial,sans-serif" fill="#131b2e" x="700" y="872" text-anchor="middle" font-size="18">Périmètre métier cible — les fonctionnalités futures ne sont pas toutes implémentées.</text>
+</svg>
