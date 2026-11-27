@@ -1,0 +1,1 @@
+export const staffRoleName = (role?: string) => ({ academic_staff: 'Responsable académique', interviewer: 'Responsable entretien', direction: 'Direction', admin: 'Administration' } as Record<string, string>)[role || ''] || 'Staff'
